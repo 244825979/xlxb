@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心声日记 - 高保真原型</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f0f2f5; /* Outer background for the preview */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden; /* Prevent body scroll */
+        }
+
+        .iphone-frame {
+            width: 390px; /* iPhone 15 Pro width */
+            height: 844px; /* iPhone 15 Pro height */
+            background-color: #fff;
+            border-radius: 40px; /* Rounded corners for the phone screen */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden; /* Hide overflow content within the frame */
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            margin: 20px;
+        }
+
+        .status-bar {
+            height: 44px;
+            background-color: transparent;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            color: #000;
+            font-size: 15px;
+            font-weight: 600;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10; /* Ensure status bar is on top */
+        }
+
+        .status-bar .time {
+            font-weight: bold;
+        }
+
+        .status-bar .icons i {
+            margin-left: 8px;
+        }
+
+        /* Each screen content area */
+        .screen-content {
+            flex-grow: 1;
+            /* Use absolute positioning to stack screens */
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding-top: 44px; /* Space for the status bar */
+            padding-bottom: 70px; /* Space for the bottom navigation */
+            overflow-y: auto; /* Allow scrolling for content within each screen */
+            -webkit-overflow-scrolling: touch;
+            /* Apply the main accent color with a subtle gradient */
+            background: linear-gradient(to bottom, #EDF5FF, #D7EBFF);
+            opacity: 0; /* Start hidden for fade-in */
+            transition: opacity 0.3s ease-in-out; /* Smooth transition for screen changes */
+            visibility: hidden; /* Hide completely when not active */
+        }
+
+        .screen-content.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .bottom-nav {
+            height: 70px;
+            background-color: #fff;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 10; /* Ensure nav bar is on top */
+        }
+
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #b0b0b0;
+            font-size: 11px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            cursor: pointer;
+            flex: 1; /* Distribute space evenly */
+            padding: 10px 0;
+        }
+
+        .bottom-nav-item.active {
+            color: #D7EBFF; /* Active icon color */
+            font-weight: 600;
+        }
+
+        .bottom-nav-item i {
+            font-size: 22px;
+            margin-bottom: 4px;
+        }
+
+        /* Card styles */
+        .card {
+            background-color: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        /* Gradient for personalized sound portrait background */
+        .gradient-bg {
+            background: linear-gradient(to top right, #D7EBFF, #EBF5FF);
+        }
+
+        .shadow-soft {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 0px 4px rgba(0, 0, 0, 0.02);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="iphone-frame">
+        <div class="status-bar">
+            <div class="time">09:41</div>
+            <div class="icons">
+                <i class="fas fa-signal"></i>
+                <i class="fas fa-wifi"></i>
+                <i class="fas fa-battery-full"></i>
+            </div>
+        </div>
+
+        <div id="home-screen" class="screen-content p-4 active">
+            <div class="flex justify-between items-center mb-6 pt-2">
+                <h1 class="text-2xl font-bold text-gray-800">心声日记</h1>
+                <i class="fas fa-cog text-xl text-gray-500"></i>
+            </div>
+
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-700">今日心情</h2>
+                <span class="text-sm text-gray-500">2024年5月26日</span>
+            </div>
+
+            <div class="card p-5 mb-6 text-center shadow-soft">
+                <div class="flex justify-center items-center mb-4">
+                    <img src="https://images.unsplash.com/photo-1549298717-380c85c2c7f5?auto=format&fit=crop&w=200&q=80" alt="Virtual Voice Avatar" class="w-20 h-20 rounded-full object-cover shadow-md mb-2">
+                </div>
+                <h3 class="text-lg font-medium text-gray-800 mb-2">今日份的宁静</h3>
+                <p class="text-sm text-gray-600 mb-4">“愿你的一天，心如止水，波澜不惊。”</p>
+                <div class="flex items-center justify-center space-x-3">
+                    <i class="fas fa-play-circle text-4xl text-blue-400 cursor-pointer hover:text-blue-500 transition-colors"></i>
+                    <div class="w-32 h-1 bg-blue-100 rounded-full relative">
+                        <div class="absolute h-full bg-blue-400 rounded-full" style="width: 40%;"></div>
+                        <div class="absolute h-3 w-3 bg-blue-500 rounded-full top-1/2 -translate-y-1/2" style="left: 40%;"></div>
+                    </div>
+                    <span class="text-sm text-gray-500">0:45</span>
+                </div>
+            </div>
+
+            <div class="card p-5 text-center shadow-soft">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">每日心情语录</h3>
+                <p class="text-xl italic text-blue-500 leading-relaxed">
+                    “愿你带着温暖的心情迎接每一天，就像清晨的阳光洒在身上那样美好。记住，生活中的每个微笑都是内心的小太阳，照亮前行的路。”
+                </p>
+                <p class="text-sm text-gray-500 mt-3">— 无名氏</p>
+            </div>
+
+            <div class="mt-8 text-center text-gray-500 text-sm">
+                <p>轻触日期，回顾往昔心声...</p>
+            </div>
+        </div>
+
+        <div id="plaza-screen" class="screen-content p-4">
+            <div class="flex justify-between items-center mb-6 pt-2">
+                <h1 class="text-2xl font-bold text-gray-800">声音树洞</h1>
+                <i class="fas fa-search text-xl text-gray-500"></i>
+            </div>
+
+            <div class="space-y-4">
+                <div class="card p-4 shadow-soft">
+                    <div class="flex items-center mb-3">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&q=80" alt="Virtual User 1" class="w-12 h-12 rounded-full object-cover mr-3 shadow-sm">
+                        <div>
+                            <p class="font-semibold text-gray-800">匿名小宇宙</p>
+                            <p class="text-xs text-gray-500">3小时前 ∙ 虚拟用户</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-700 leading-relaxed mb-4">
+                        今天天气真好，晒着太阳，感觉心里的烦恼都被吹散了。偶尔放空一下，真好。
+                    </p>
+                    <img src="https://images.unsplash.com/photo-1507525428034-b723cf9613ab?auto=format&fit=crop&w=400&q=80" alt="Image for Virtual User 1" class="w-full h-40 object-cover rounded-lg mb-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2 text-gray-500">
+                            <i class="fas fa-volume-up text-blue-400 text-lg"></i>
+                            <span class="text-sm">播放声音</span>
+                            <div class="w-24 h-1 bg-blue-100 rounded-full relative ml-2">
+                                <div class="absolute h-full bg-blue-400 rounded-full" style="width: 60%;"></div>
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-500">浏览模式</span>
+                    </div>
+                </div>
+
+                <div class="card p-4 shadow-soft">
+                    <div class="flex items-center mb-3">
+                        <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=80&q=80" alt="Virtual User 2" class="w-12 h-12 rounded-full object-cover mr-3 shadow-sm">
+                        <div>
+                            <p class="font-semibold text-gray-800">深夜听海人</p>
+                            <p class="text-xs text-gray-500">昨日 ∙ 虚拟用户</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-700 leading-relaxed mb-4">
+                        最近一直在思考人生的意义，虽然有点迷茫，但也在慢慢寻找答案。
+                    </p>
+                    <img src="https://images.unsplash.com/photo-1510511459019-5da7094ed475?auto=format&fit=crop&w=400&q=80" alt="Image for Virtual User 2" class="w-full h-40 object-cover rounded-lg mb-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2 text-gray-500">
+                            <i class="fas fa-volume-up text-blue-400 text-lg"></i>
+                            <span class="text-sm">播放声音</span>
+                            <div class="w-24 h-1 bg-blue-100 rounded-full relative ml-2">
+                                <div class="absolute h-full bg-blue-400 rounded-full" style="width: 80%;"></div>
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-500">浏览模式</span>
+                    </div>
+                </div>
+
+                <div class="card p-4 shadow-soft">
+                    <div class="flex items-center mb-3">
+                        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29329?auto=format&fit=crop&w=80&q=80" alt="Virtual User 3" class="w-12 h-12 rounded-full object-cover mr-3 shadow-sm">
+                        <div>
+                            <p class="font-semibold text-gray-800">雨后彩虹</p>
+                            <p class="text-xs text-gray-500">2天前 ∙ 虚拟用户</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-700 leading-relaxed mb-4">
+                        虽然遇到了一些小挫折，但相信明天会更好！阳光总在风雨后。
+                    </p>
+                    <img src="https://images.unsplash.com/photo-1507608158150-cded66023223?auto=format&fit=crop&w=400&q=80" alt="Image for Virtual User 3" class="w-full h-40 object-cover rounded-lg mb-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2 text-gray-500">
+                            <i class="fas fa-volume-up text-blue-400 text-lg"></i>
+                            <span class="text-sm">播放声音</span>
+                            <div class="w-24 h-1 bg-blue-100 rounded-full relative ml-2">
+                                <div class="absolute h-full bg-blue-400 rounded-full" style="width: 45%;"></div>
+                            </div>
+                        </div>
+                        <span class="text-sm text-gray-500">浏览模式</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="messages-screen" class="screen-content flex flex-col p-4">
+            <div class="flex justify-center items-center mb-4 pt-2">
+                <h1 class="text-2xl font-bold text-gray-800">AI 语音助手</h1>
+            </div>
+
+            <div class="flex-grow overflow-y-auto pb-4 space-y-4">
+                <div class="flex justify-start">
+                    <div class="bg-white rounded-xl rounded-bl-none p-3 max-w-xs shadow-soft text-gray-800">
+                        <p>您好！我是您的心声助手。准备好记录您的心声了吗？</p>
+                        <p class="text-xs text-gray-400 mt-1 text-right">09:30 AM</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <div class="bg-blue-300 rounded-xl rounded-br-none p-3 max-w-xs shadow-soft text-white">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-volume-up text-white text-lg"></i>
+                            <div class="w-24 h-1 bg-white bg-opacity-50 rounded-full relative">
+                                <div class="absolute h-full bg-white rounded-full" style="width: 70%;"></div>
+                            </div>
+                            <span class="text-sm">0:15</span>
+                        </div>
+                        <p class="text-xs text-blue-100 mt-1 text-left">09:32 AM</p>
+                    </div>
+                </div>
+                <div class="flex justify-start">
+                    <div class="bg-white rounded-xl rounded-bl-none p-3 max-w-xs shadow-soft text-gray-800">
+                        <p>从您的声音中，我感受到了些许平静与放松。今天过得还不错吗？</p>
+                        <p class="text-xs text-gray-400 mt-1 text-right">09:33 AM</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <div class="bg-blue-300 rounded-xl rounded-br-none p-3 max-w-xs shadow-soft text-white">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-volume-up text-white text-lg"></i>
+                            <div class="w-24 h-1 bg-white bg-opacity-50 rounded-full relative">
+                                <div class="absolute h-full bg-white rounded-full" style="width: 40%;"></div>
+                            </div>
+                            <span class="text-sm">0:10</span>
+                        </div>
+                        <p class="text-xs text-blue-100 mt-1 text-left">09:35 AM</p>
+                    </div>
+                </div>
+                <div class="flex justify-start">
+                    <div class="bg-white rounded-xl rounded-bl-none p-3 max-w-xs shadow-soft text-gray-800">
+                        <p>嗯，听起来您正在思考一些事情。如果您愿意，可以再多说一些，我会静静倾听。</p>
+                        <p class="text-xs text-gray-400 mt-1 text-right">09:36 AM</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-shrink-0 flex items-center p-4 bg-white rounded-t-3xl shadow-lg mt-auto">
+                <input type="text" placeholder="输入文字或长按录音..." class="flex-grow border-none focus:outline-none text-gray-700 bg-gray-100 rounded-full py-2 px-4 text-sm mr-3">
+                <div class="relative w-12 h-12 flex-shrink-0">
+                    <div class="absolute inset-0 bg-blue-400 rounded-full flex items-center justify-center shadow-md cursor-pointer transform transition-transform duration-200 hover:scale-105 active:scale-95">
+                        <i class="fas fa-microphone text-white text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="archive-screen" class="screen-content p-4">
+            <div class="flex justify-between items-center mb-6 pt-2">
+                <h1 class="text-2xl font-bold text-gray-800">我的声音档案</h1>
+                <i class="fas fa-cog text-xl text-gray-500 cursor-pointer"></i>
+            </div>
+
+            <div class="card p-5 text-center mb-6 gradient-bg text-white shadow-soft">
+                <img src="https://images.unsplash.com/photo-1529629164601-3820a442e399?auto=format&fit=crop&w=100&q=80" alt="User Avatar" class="w-24 h-24 rounded-full object-cover mx-auto mb-3 border-4 border-white shadow-md">
+                <h3 class="text-xl font-bold mb-1">心之声</h3>
+                <p class="text-sm opacity-90 mb-3">#我的语音签名：温柔是力量</p>
+                <button class="bg-white bg-opacity-30 text-white text-sm px-4 py-2 rounded-full backdrop-filter backdrop-blur-sm hover:bg-opacity-40 transition-colors">
+                    编辑个人信息 <i class="fas fa-edit ml-1"></i>
+                </button>
+            </div>
+
+            <div class="card p-5 mb-6 shadow-soft">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">心情分析图谱</h3>
+                <div class="w-full h-40 bg-gray-50 rounded-lg flex items-end justify-around p-3">
+                    <div class="flex flex-col items-center">
+                        <div class="w-6 bg-blue-200 rounded-t-full" style="height: 60%;"></div>
+                        <span class="text-xs text-gray-500 mt-1">周一</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-6 bg-blue-300 rounded-t-full" style="height: 80%;"></div>
+                        <span class="text-xs text-gray-500 mt-1">周二</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-6 bg-blue-400 rounded-t-full" style="height: 70%;"></div>
+                        <span class="text-xs text-gray-500 mt-1">周三</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-6 bg-blue-300 rounded-t-full" style="height: 50%;"></div>
+                        <span class="text-xs text-gray-500 mt-1">周四</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-6 bg-blue-200 rounded-t-full" style="height: 90%;"></div>
+                        <span class="text-xs text-gray-500 mt-1">周五</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-6 bg-blue-100 rounded-t-full" style="height: 40%;"></div>
+                        <span class="text-xs text-gray-500 mt-1">周六</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-6 bg-blue-200 rounded-t-full" style="height: 75%;"></div>
+                        <span class="text-xs text-gray-500 mt-1">周日</span>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-600 mt-3 text-center">您的心情指数本周波动不大，保持平稳。</p>
+            </div>
+
+            <div class="card p-5 shadow-soft">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">我的心声记录</h3>
+                <ul class="space-y-3">
+                    <li class="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                        <div class="flex items-center">
+                            <i class="fas fa-play-circle text-blue-400 mr-3 text-xl"></i>
+                            <div>
+                                <p class="text-gray-700 font-medium">关于梦想的独白</p>
+                                <p class="text-xs text-gray-500">2024-05-25 18:30</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-heart text-red-400 cursor-pointer"></i>
+                    </li>
+                    <li class="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                        <div class="flex items-center">
+                            <i class="fas fa-play-circle text-blue-400 mr-3 text-xl"></i>
+                            <div>
+                                <p class="text-gray-700 font-medium">午后的小确幸</p>
+                                <p class="text-xs text-gray-500">2024-05-24 14:15</p>
+                            </div>
+                        </div>
+                        <i class="far fa-heart text-gray-300 cursor-pointer hover:text-red-300"></i>
+                    </li>
+                    <li class="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                        <div class="flex items-center">
+                            <i class="fas fa-play-circle text-blue-400 mr-3 text-xl"></i>
+                            <div>
+                                <p class="text-gray-700 font-medium">失眠夜的思绪</p>
+                                <p class="text-xs text-gray-500">2024-05-23 01:00</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-heart text-red-400 cursor-pointer"></i>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="mt-8 text-gray-600 text-sm space-y-3">
+                <a href="#" class="block px-3 py-2 rounded-lg hover:bg-gray-100">用户协议 / 隐私协议</a>
+                <a href="#" class="block px-3 py-2 rounded-lg hover:bg-gray-100">App 使用说明</a>
+                <a href="#" class="block px-3 py-2 rounded-lg hover:bg-gray-100">举报与封禁申诉通道</a>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <div class="bottom-nav-item active" data-screen="home-screen">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </div>
+            <div class="bottom-nav-item" data-screen="plaza-screen">
+                <i class="fas fa-tree"></i>
+                <span>广场</span>
+            </div>
+            <div class="bottom-nav-item" data-screen="messages-screen">
+                <i class="fas fa-comment-dots"></i>
+                <span>消息</span>
+            </div>
+            <div class="bottom-nav-item" data-screen="archive-screen">
+                <i class="fas fa-user"></i>
+                <span>我的</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const screenContents = document.querySelectorAll('.screen-content');
+            const navItems = document.querySelectorAll('.bottom-nav-item');
+
+            function showScreen(screenId) {
+                // Deactivate all screens and nav items
+                screenContents.forEach(screen => {
+                    screen.classList.remove('active');
+                });
+                navItems.forEach(item => {
+                    item.classList.remove('active');
+                });
+
+                // Activate the selected screen and nav item
+                const activeScreen = document.getElementById(screenId);
+                if (activeScreen) {
+                    activeScreen.classList.add('active');
+                }
+                document.querySelector(`[data-screen="${screenId}"]`).classList.add('active');
+            }
+
+            // Set initial screen to Home
+            showScreen('home-screen');
+
+            // Add click listeners to navigation items
+            navItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const screenId = item.dataset.screen;
+                    showScreen(screenId);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
