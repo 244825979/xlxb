@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/plaza_post.dart';
 import '../models/comment.dart';
 import '../constants/app_colors.dart';
@@ -22,19 +23,23 @@ class PostDetailScreen extends StatefulWidget {
 
 class _PostDetailScreenState extends State<PostDetailScreen> {
   final TextEditingController _commentController = TextEditingController();
+  final FocusNode _commentFocusNode = FocusNode();
   List<Comment> _comments = [];
   bool _isLoading = true;
+  bool _isCommentFieldReady = false;
   final StorageService _storageService = StorageService();
 
   @override
   void initState() {
     super.initState();
     _loadComments();
+    _checkCommentFieldReady();
   }
 
   @override
   void dispose() {
     _commentController.dispose();
+    _commentFocusNode.dispose();
     super.dispose();
   }
 
@@ -87,6 +92,168 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
   }
 
+  // 检查是否需要显示评论合规提醒
+  Future<bool> _shouldShowCommentGuide() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasShown = prefs.getBool('comment_guide_shown') ?? false;
+    print('comment_guide_shown: $hasShown'); // 调试信息
+    return !hasShown;
+  }
+
+  // 标记已显示评论合规提醒
+  Future<void> _markCommentGuideShown() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('comment_guide_shown', true);
+    print('Marked comment guide as shown'); // 调试信息
+  }
+
+  // 处理评论输入框点击
+  Future<void> _handleCommentTap() async {
+    print('handleCommentTap called'); // 调试信息
+    
+    if (!_isCommentFieldReady) {
+      // 如果评论框未准备好，显示提醒
+      _showCommentGuideDialog();
+    }
+    // 如果已经准备好，让TextField正常处理点击事件
+  }
+
+  // 显示评论合规提醒弹窗
+  void _showCommentGuideDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // 不能通过点击外部关闭
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.chat_bubble_outline,
+              color: AppColors.playButton,
+              size: 24,
+            ),
+            SizedBox(width: 8),
+            Text(
+              '评论须知',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '感谢您参与互动！为营造和谐的交流环境，请遵守以下规范：',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textPrimary,
+                height: 1.4,
+              ),
+            ),
+            SizedBox(height: 12),
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Colors.orange.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '请勿发布：',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.orange[700],
+                    ),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    '• 恶意攻击、人身侮辱\n'
+                    '• 广告推广、垃圾信息\n'
+                    '• 政治敏感、违法内容\n'
+                    '• 不实信息、恶意传播',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.orange[700],
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 12),
+            Text(
+              '让我们一起传递正能量，构建温暖的心声社区！',
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.playButton,
+                fontWeight: FontWeight.w500,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text(
+              '取消',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              // 标记已显示提醒
+              await _markCommentGuideShown();
+              Navigator.of(context).pop();
+              // 更新状态，启用评论框
+              setState(() {
+                _isCommentFieldReady = true;
+              });
+              // 聚焦到评论输入框
+              Future.delayed(Duration(milliseconds: 100), () {
+                _commentFocusNode.requestFocus();
+              });
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.playButton,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              elevation: 0,
+            ),
+            child: Text(
+              '我知道了',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // 举报功能
   void _reportPost() {
     final reportService = ReportService();
@@ -98,6 +265,27 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         targetId: reportService.generateTargetId(widget.post.content),
       ),
     );
+  }
+
+  // 举报评论功能
+  void _reportComment(Comment comment) {
+    final reportService = ReportService();
+    showDialog(
+      context: context,
+      builder: (context) => ReportDialog(
+        targetContent: comment.content,
+        targetType: 'comment',
+        targetId: reportService.generateTargetId(comment.content),
+      ),
+    );
+  }
+
+  // 检查评论框是否可用
+  Future<void> _checkCommentFieldReady() async {
+    final shouldShow = await _shouldShowCommentGuide();
+    setState(() {
+      _isCommentFieldReady = !shouldShow;
+    });
   }
 
   @override
@@ -279,7 +467,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             ),
                           )
                         else
-                          ..._comments.map((comment) => CommentItem(comment: comment)),
+                          ..._comments.map((comment) => CommentItem(
+                            comment: comment,
+                            onReport: () => _reportComment(comment),
+                          )),
                       ],
                     ),
                   ),
@@ -306,6 +497,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 Expanded(
                   child: TextField(
                     controller: _commentController,
+                    focusNode: _commentFocusNode,
+                    readOnly: !_isCommentFieldReady,
+                    onTap: _handleCommentTap,
                     decoration: InputDecoration(
                       hintText: '写下你的评论...',
                       border: OutlineInputBorder(
@@ -338,8 +532,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 // 评论项组件
 class CommentItem extends StatelessWidget {
   final Comment comment;
+  final VoidCallback onReport;
 
-  const CommentItem({Key? key, required this.comment}) : super(key: key);
+  const CommentItem({Key? key, required this.comment, required this.onReport}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -368,6 +563,21 @@ class CommentItem extends StatelessWidget {
                 style: TextStyle(
                   color: Colors.grey,
                   fontSize: 12,
+                ),
+              ),
+              Spacer(), // 推送举报按钮到右侧
+              GestureDetector(
+                onTap: onReport,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Text(
+                    '举报',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
               ),
             ],
