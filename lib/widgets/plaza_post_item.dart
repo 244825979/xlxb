@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_assets.dart';
+import '../widgets/report_dialog.dart';
+import '../services/report_service.dart';
+import '../services/user_service.dart';
+import '../models/plaza_post.dart';
 
 class PlazaPostItem extends StatelessWidget {
   final String id;
@@ -12,6 +16,8 @@ class PlazaPostItem extends StatelessWidget {
   final VoidCallback? onFavoritePressed;
   final String? imageUrl;
   final String? userAvatar;
+  final String? userId;
+  final ReviewStatus? reviewStatus;
 
   const PlazaPostItem({
     Key? key,
@@ -24,6 +30,8 @@ class PlazaPostItem extends StatelessWidget {
     this.onFavoritePressed,
     this.imageUrl,
     this.userAvatar,
+    this.userId,
+    this.reviewStatus,
   }) : super(key: key);
 
   @override
@@ -61,13 +69,40 @@ class PlazaPostItem extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        userName,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            userName,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          // 审核中标识（这里需要判断当前动态是否属于当前用户且在审核中）
+                          if (_shouldShowReviewStatus()) ...[
+                            SizedBox(width: 8),
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: Colors.orange.withOpacity(0.3),
+                                  width: 0.5,
+                                ),
+                              ),
+                              child: Text(
+                                '审核中',
+                                style: TextStyle(
+                                  color: Colors.orange[700],
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       SizedBox(height: 2),
                       Text(
@@ -138,7 +173,6 @@ class PlazaPostItem extends StatelessWidget {
           Padding(
             padding: EdgeInsets.all(16),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 GestureDetector(
                   onTap: onFavoritePressed,
@@ -167,6 +201,40 @@ class PlazaPostItem extends StatelessWidget {
                             fontSize: 12,
                             color: isFavorite ? AppColors.primary : AppColors.textSecondary,
                             fontWeight: isFavorite ? FontWeight.w600 : FontWeight.normal,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Spacer(),
+                // 举报按钮
+                GestureDetector(
+                  onTap: () => _showReportDialog(context),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: AppColors.textSecondary.withOpacity(0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.flag_outlined,
+                          size: 16,
+                          color: AppColors.textSecondary,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          '举报',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ],
@@ -222,5 +290,24 @@ class PlazaPostItem extends StatelessWidget {
     } else {
       return '😢';
     }
+  }
+
+  void _showReportDialog(BuildContext context) {
+    final reportService = ReportService();
+    showDialog(
+      context: context,
+      builder: (context) => ReportDialog(
+        targetContent: content,
+        targetType: 'post',
+        targetId: reportService.generateTargetId(content),
+      ),
+    );
+  }
+
+  // 判断是否应该显示审核状态
+  bool _shouldShowReviewStatus() {
+    return userId != null && 
+           reviewStatus == ReviewStatus.pending && 
+           UserService.isCurrentUser(userId!);
   }
 } 

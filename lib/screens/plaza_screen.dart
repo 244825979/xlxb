@@ -9,6 +9,9 @@ import '../screens/post_detail_screen.dart';
 import '../screens/image_view_screen.dart';
 import '../screens/publish_post_screen.dart';
 import '../widgets/plaza_browse_card.dart';
+import '../widgets/report_dialog.dart';
+import '../services/report_service.dart';
+import '../services/user_service.dart';
 
 class PlazaScreen extends StatelessWidget {
   @override
@@ -220,11 +223,38 @@ class PlazaScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            post.userName,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                post.userName,
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              // 审核中标识
+                              if (post.isUnderReview && UserService.isCurrentUser(post.userId)) ...[
+                                SizedBox(width: 8),
+                                Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: Colors.orange.withOpacity(0.3),
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    '审核中',
+                                    style: TextStyle(
+                                      color: Colors.orange[700],
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                           Text(
                             post.formattedCreatedAt,
@@ -313,6 +343,27 @@ class PlazaScreen extends StatelessWidget {
                         ),
                       ],
                     ),
+                    Spacer(),
+                    // 举报按钮
+                    GestureDetector(
+                      onTap: () => _showReportDialog(context, post),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.flag_outlined,
+                            size: 20,
+                            color: AppColors.textSecondary,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            '举报',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -359,5 +410,18 @@ class PlazaScreen extends StatelessWidget {
         },
       );
     }
+  }
+
+  // 显示举报对话框
+  void _showReportDialog(BuildContext context, post) {
+    final reportService = ReportService();
+    showDialog(
+      context: context,
+      builder: (context) => ReportDialog(
+        targetContent: post.content,
+        targetType: 'post',
+        targetId: reportService.generateTargetId(post.content),
+      ),
+    );
   }
 } 

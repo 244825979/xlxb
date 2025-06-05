@@ -6,6 +6,7 @@ import '../models/mood_data.dart';
 import '../models/quote.dart';
 import '../constants/app_assets.dart';
 import '../constants/mood_quotes.dart';
+import '../services/user_service.dart';
 
 class MockData {
   // 虚拟用户名称列表
@@ -211,6 +212,9 @@ class MockData {
       
       print('Generating $totalPosts posts (${imageCount} with images, ${imageCount * textPostRatio} text-only)');
       
+      // 获取当前用户ID
+      final currentUserId = UserService.getCurrentUserId();
+      
       // 生成所有帖子
       for (int i = 0; i < totalPosts; i++) {
         final userIndex = i % virtualUserNames.length;
@@ -221,27 +225,42 @@ class MockData {
         final bool hasImage = i % (textPostRatio + 1) == 0;
         final int imageIndex = hasImage ? (i / (textPostRatio + 1)).floor() + 1 : 0;
         
+        // 设置用户ID，前面几个帖子设为当前用户的
+        final String userId = i < 3 ? currentUserId : 'user_$i';
+        final String userName = i < 3 ? '心之声' : virtualUserNames[userIndex];
+        
+        // 设置审核状态，当前用户的第一个帖子设为审核中
+        final ReviewStatus reviewStatus = (i == 0 && userId == currentUserId) 
+            ? ReviewStatus.pending 
+            : ReviewStatus.approved;
+        
         final post = PlazaPost(
           id: 'post_$i',
-          userId: 'user_$i',
-          userName: virtualUserNames[userIndex],
+          userId: userId,
+          userName: userName,
           userAvatar: 'assets/images/head_image/head_$avatarIndex.jpeg',
           content: plazaContents[contentIndex],
           imageUrl: hasImage ? 'assets/images/guangchang/guangchang_$imageIndex.jpeg' : null,
           createdAt: now.subtract(Duration(minutes: i * 30)), // 每个帖子间隔30分钟
-          isVirtual: true,
+          isVirtual: i >= 3, // 当前用户的帖子不是虚拟用户
           moodScore: 5.0 + (i % 6) * 0.5,
           commentCount: 0, // 新生成的帖子评论数为0
+          reviewStatus: reviewStatus,
         );
         
         posts.add(post);
       }
       
-      // 随机打乱帖子顺序
-      posts.shuffle();
+      // 随机打乱帖子顺序，但保持当前用户的审核中帖子在前面
+      final pendingPosts = posts.where((post) => post.reviewStatus == ReviewStatus.pending).toList();
+      final otherPosts = posts.where((post) => post.reviewStatus != ReviewStatus.pending).toList();
+      otherPosts.shuffle();
       
-      print('Successfully generated ${posts.length} posts');
-      return posts;
+      // 将审核中的帖子放在最前面
+      final finalPosts = [...pendingPosts, ...otherPosts];
+      
+      print('Successfully generated ${finalPosts.length} posts');
+      return finalPosts;
       
     } catch (e) {
       print('Error generating mock posts: $e');
@@ -258,6 +277,7 @@ class MockData {
           isVirtual: true,
           moodScore: 8.0,
           commentCount: 0,
+          reviewStatus: ReviewStatus.approved,
         )
       ];
     }

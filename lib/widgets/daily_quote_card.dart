@@ -5,6 +5,8 @@ import '../screens/quotes_screen.dart';
 import '../providers/quotes_provider.dart';
 import '../constants/app_strings.dart';
 import '../constants/mood_quotes.dart';
+import '../widgets/report_dialog.dart';
+import '../services/report_service.dart';
 
 class DailyQuoteCard extends StatelessWidget {
   final String? quote;
@@ -17,6 +19,7 @@ class DailyQuoteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final displayQuote = quote ?? MoodQuotes.getDailyQuote();
+    final reportService = ReportService();
 
     return Container(
       padding: EdgeInsets.all(20),
@@ -170,6 +173,38 @@ class DailyQuoteCard extends StatelessWidget {
                       );
                     },
                   ),
+                  // 举报按钮
+                  Container(
+                    margin: EdgeInsets.only(right: 8),
+                    child: Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(20),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: () => _showReportDialog(context, displayQuote, reportService),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.flag_outlined,
+                                color: AppColors.textSecondary,
+                                size: 16,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                '举报',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                   Material(
                     color: AppColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -209,6 +244,17 @@ class DailyQuoteCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  void _showReportDialog(BuildContext context, String quoteContent, ReportService reportService) {
+    showDialog(
+      context: context,
+      builder: (context) => ReportDialog(
+        targetContent: quoteContent,
+        targetType: 'quote',
+        targetId: reportService.generateTargetId(quoteContent),
       ),
     );
   }

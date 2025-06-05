@@ -7,6 +7,7 @@ import 'dart:math';
 import 'package:provider/provider.dart';
 import 'profile_provider.dart';
 import '../models/voice_record.dart';
+import '../services/user_service.dart';
 
 class PlazaProvider extends ChangeNotifier {
   // 状态变量
@@ -193,33 +194,27 @@ class PlazaProvider extends ChangeNotifier {
     String? imagePath,
   }) async {
     try {
-      // 生成唯一ID
-      final id = DateTime.now().millisecondsSinceEpoch.toString();
-      
-      // 随机选择一个头像
-      final random = Random();
-      final avatarIndex = random.nextInt(31) + 1;
-      final userAvatar = 'assets/images/head_image/head_$avatarIndex.jpeg';
+      // 获取当前用户信息
+      final currentUserId = UserService.getCurrentUserId();
       
       // 生成随机心情分数
+      final random = Random();
       final moodScore = 6.0 + random.nextDouble() * 4.0; // 6.0-10.0之间
-      
-      // 生成随机昵称
-      final userName = _generateRandomUserName(random);
       
       // 创建新动态
       final newPost = PlazaPost(
-        id: id,
-        userId: 'current_user', // 当前用户ID
-        userName: userName, // 使用生成的随机昵称
-        userAvatar: userAvatar,
+        id: 'post_${DateTime.now().millisecondsSinceEpoch}',
+        userId: currentUserId,
+        userName: '心之声', // 当前用户昵称
+        userAvatar: 'assets/images/head_image/head_1.jpeg',
         content: content,
-        imageUrl: imagePath, // 如果有图片，这里应该是图片的本地路径或上传后的URL
+        imageUrl: imagePath,
         createdAt: DateTime.now(),
-        isVirtual: false, // 真实用户发布的动态
+        isVirtual: false,
         moodScore: moodScore,
         isLiked: false,
         commentCount: 0,
+        reviewStatus: ReviewStatus.pending, // 新发布的动态设为审核中
       );
       
       // 添加到posts列表开头（最新的在前面）
@@ -249,33 +244,27 @@ class PlazaProvider extends ChangeNotifier {
     String? imagePath,
   }) async {
     try {
-      // 生成唯一ID
-      final id = DateTime.now().millisecondsSinceEpoch.toString();
-      
-      // 随机选择一个头像
-      final random = Random();
-      final avatarIndex = random.nextInt(31) + 1;
-      final userAvatar = 'assets/images/head_image/head_$avatarIndex.jpeg';
+      // 获取当前用户信息
+      final currentUserId = UserService.getCurrentUserId();
       
       // 生成随机心情分数
+      final random = Random();
       final moodScore = 6.0 + random.nextDouble() * 4.0; // 6.0-10.0之间
-      
-      // 生成随机昵称
-      final userName = _generateRandomUserName(random);
       
       // 创建新动态
       final newPost = PlazaPost(
-        id: id,
-        userId: 'current_user', // 当前用户ID
-        userName: userName, // 使用生成的随机昵称
-        userAvatar: userAvatar,
+        id: 'post_${DateTime.now().millisecondsSinceEpoch}',
+        userId: currentUserId,
+        userName: '心之声', // 当前用户昵称
+        userAvatar: 'assets/images/head_image/head_1.jpeg',
         content: content,
-        imageUrl: imagePath, // 如果有图片，这里应该是图片的本地路径或上传后的URL
+        imageUrl: imagePath,
         createdAt: DateTime.now(),
-        isVirtual: false, // 真实用户发布的动态
+        isVirtual: false,
         moodScore: moodScore,
         isLiked: false,
         commentCount: 0,
+        reviewStatus: ReviewStatus.pending, // 新发布的动态设为审核中
       );
       
       // 添加到posts列表开头（最新的在前面）

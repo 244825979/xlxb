@@ -5,6 +5,8 @@ import '../models/daily_quote.dart';
 import '../utils/quote_generator.dart';
 import '../constants/app_colors.dart';
 import '../providers/quotes_provider.dart';
+import '../widgets/report_dialog.dart';
+import '../services/report_service.dart';
 
 class QuotesScreen extends StatelessWidget {
   final List<DailyQuote> quotes = QuoteGenerator.generateDailyQuotes(100);
@@ -55,6 +57,8 @@ class QuotesScreen extends StatelessWidget {
   }
 
   Widget _buildQuoteCard(BuildContext context, DailyQuote quote) {
+    final reportService = ReportService();
+    
     return Container(
       margin: EdgeInsets.only(bottom: 16),
       padding: EdgeInsets.all(16),
@@ -66,7 +70,7 @@ class QuotesScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 日期和喜欢按钮
+          // 日期和操作按钮
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -110,18 +114,43 @@ class QuotesScreen extends StatelessWidget {
                   ],
                 ],
               ),
-              Consumer<QuotesProvider>(
-                builder: (context, provider, child) {
-                  final isLiked = provider.isQuoteLiked(quote.content);
-                  return IconButton(
-                    icon: Icon(
-                      isLiked ? Icons.favorite : Icons.favorite_border,
-                      color: isLiked ? AppColors.favoriteRed : AppColors.textSecondary,
-                      size: 20,
+              Row(
+                children: [
+                  // 举报按钮
+                  Container(
+                    margin: EdgeInsets.only(right: 8),
+                    child: Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(20),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: () => _showReportDialog(context, quote, reportService),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          child: Icon(
+                            Icons.flag_outlined,
+                            color: AppColors.textSecondary,
+                            size: 18,
+                          ),
+                        ),
+                      ),
                     ),
-                    onPressed: () => provider.toggleLike(quote.content, context),
-                  );
-                },
+                  ),
+                  // 喜欢按钮
+                  Consumer<QuotesProvider>(
+                    builder: (context, provider, child) {
+                      final isLiked = provider.isQuoteLiked(quote.content);
+                      return IconButton(
+                        icon: Icon(
+                          isLiked ? Icons.favorite : Icons.favorite_border,
+                          color: isLiked ? AppColors.favoriteRed : AppColors.textSecondary,
+                          size: 20,
+                        ),
+                        onPressed: () => provider.toggleLike(quote.content, context),
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),
@@ -136,6 +165,17 @@ class QuotesScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showReportDialog(BuildContext context, DailyQuote quote, ReportService reportService) {
+    showDialog(
+      context: context,
+      builder: (context) => ReportDialog(
+        targetContent: quote.content,
+        targetType: 'quote',
+        targetId: reportService.generateTargetId(quote.content),
       ),
     );
   }

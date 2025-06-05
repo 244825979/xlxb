@@ -1,3 +1,10 @@
+// 审核状态枚举
+enum ReviewStatus {
+  pending,     // 审核中
+  approved,    // 已通过
+  rejected,    // 已拒绝
+}
+
 class PlazaPost {
   final String id;
   final String userId;
@@ -10,6 +17,7 @@ class PlazaPost {
   final double moodScore;
   final bool isLiked;
   final int commentCount;
+  final ReviewStatus reviewStatus;
 
   const PlazaPost({
     required this.id,
@@ -23,6 +31,7 @@ class PlazaPost {
     required this.moodScore,
     this.isLiked = false,
     this.commentCount = 0,
+    this.reviewStatus = ReviewStatus.approved, // 默认为已通过
   });
 
   PlazaPost copyWith({
@@ -37,6 +46,7 @@ class PlazaPost {
     double? moodScore,
     bool? isLiked,
     int? commentCount,
+    ReviewStatus? reviewStatus,
   }) {
     return PlazaPost(
       id: id ?? this.id,
@@ -50,6 +60,7 @@ class PlazaPost {
       moodScore: moodScore ?? this.moodScore,
       isLiked: isLiked ?? this.isLiked,
       commentCount: commentCount ?? this.commentCount,
+      reviewStatus: reviewStatus ?? this.reviewStatus,
     );
   }
 
@@ -66,6 +77,7 @@ class PlazaPost {
       'moodScore': moodScore,
       'isLiked': isLiked,
       'commentCount': commentCount,
+      'reviewStatus': reviewStatus.name,
     };
   }
 
@@ -82,10 +94,29 @@ class PlazaPost {
       moodScore: json['moodScore']?.toDouble() ?? 0.0,
       isLiked: json['isLiked'] ?? false,
       commentCount: json['commentCount'] ?? 0,
+      reviewStatus: ReviewStatus.values.firstWhere(
+        (e) => e.name == json['reviewStatus'],
+        orElse: () => ReviewStatus.approved,
+      ),
     );
   }
 
   bool get hasImage => imageUrl != null && imageUrl!.isNotEmpty;
+  
+  // 是否正在审核中
+  bool get isUnderReview => reviewStatus == ReviewStatus.pending;
+  
+  // 获取审核状态描述
+  String get reviewStatusDescription {
+    switch (reviewStatus) {
+      case ReviewStatus.pending:
+        return '审核中';
+      case ReviewStatus.approved:
+        return '已通过';
+      case ReviewStatus.rejected:
+        return '已拒绝';
+    }
+  }
   
   String get formattedCreatedAt {
     final now = DateTime.now();

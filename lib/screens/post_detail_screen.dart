@@ -6,6 +6,9 @@ import '../models/comment.dart';
 import '../constants/app_colors.dart';
 import '../providers/plaza_provider.dart';
 import '../services/storage_service.dart';
+import '../widgets/report_dialog.dart';
+import '../services/report_service.dart';
+import '../services/user_service.dart';
 import 'image_view_screen.dart';
 
 class PostDetailScreen extends StatefulWidget {
@@ -86,67 +89,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
   // 举报功能
   void _reportPost() {
+    final reportService = ReportService();
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('举报帖子'),
-          content: Text('确定要举报这条帖子吗？'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('取消'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _showReportSuccessDialog();
-              },
-              child: Text(
-                '确认举报',
-                style: TextStyle(color: Colors.red),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // 显示举报成功弹窗
-  void _showReportSuccessDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            '举报成功',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Text(
-            '我们已接收到您的举报内容，非常重视您的举报。将在48小时内进行处理，感谢您的配合。',
-            style: TextStyle(
-              fontSize: 16,
-              height: 1.5,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                '确定',
-                style: TextStyle(
-                  color: AppColors.playButton,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+      builder: (context) => ReportDialog(
+        targetContent: widget.post.content,
+        targetType: 'post',
+        targetId: reportService.generateTargetId(widget.post.content),
+      ),
     );
   }
 
@@ -209,12 +159,39 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                widget.post.userName,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
+                              Row(
+                                children: [
+                                  Text(
+                                    widget.post.userName,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  // 审核中标识
+                                  if (widget.post.isUnderReview && UserService.isCurrentUser(widget.post.userId)) ...[
+                                    SizedBox(width: 8),
+                                    Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: Colors.orange.withOpacity(0.3),
+                                          width: 0.5,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        '审核中',
+                                        style: TextStyle(
+                                          color: Colors.orange[700],
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
                               Text(
                                 widget.post.formattedCreatedAt,

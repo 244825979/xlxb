@@ -4,6 +4,9 @@ import '../models/plaza_post.dart';
 import '../constants/app_colors.dart';
 import '../screens/post_detail_screen.dart';
 import '../screens/image_view_screen.dart';
+import '../widgets/report_dialog.dart';
+import '../services/report_service.dart';
+import '../services/user_service.dart';
 
 class PlazaBrowseCard extends StatelessWidget {
   final PlazaPost post;
@@ -88,14 +91,41 @@ class PlazaBrowseCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          post.userName,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        Row(
+                          children: [
+                            Text(
+                              post.userName,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            // 审核中标识
+                            if (post.isUnderReview && UserService.isCurrentUser(post.userId)) ...[
+                              SizedBox(width: 6),
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: Colors.orange.withOpacity(0.3),
+                                    width: 0.5,
+                                  ),
+                                ),
+                                child: Text(
+                                  '审核中',
+                                  style: TextStyle(
+                                    color: Colors.orange[700],
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                         Text(
                           post.formattedCreatedAt,
@@ -181,7 +211,7 @@ class PlazaBrowseCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Spacer(),
+                  SizedBox(width: 16),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -202,11 +232,46 @@ class PlazaBrowseCard extends StatelessWidget {
                       ],
                     ],
                   ),
+                  Spacer(),
+                  // 举报按钮
+                  GestureDetector(
+                    onTap: () => _showReportDialog(context),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.flag_outlined,
+                          size: 16,
+                          color: AppColors.textSecondary,
+                        ),
+                        SizedBox(width: 2),
+                        Text(
+                          '举报',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showReportDialog(BuildContext context) {
+    final reportService = ReportService();
+    showDialog(
+      context: context,
+      builder: (context) => ReportDialog(
+        targetContent: post.content,
+        targetType: 'post',
+        targetId: reportService.generateTargetId(post.content),
       ),
     );
   }

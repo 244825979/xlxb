@@ -354,6 +354,76 @@ class _PublishPostScreenState extends State<PublishPostScreen> {
                   ],
                 ),
               ),
+              
+              SizedBox(height: 16),
+              
+              // 内容规范提醒
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.orange.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.warning_amber_outlined,
+                          color: Colors.orange[700],
+                          size: 18,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          '内容规范',
+                          style: TextStyle(
+                            color: Colors.orange[700],
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      '为维护良好的社区环境，请勿发布以下内容：',
+                      style: TextStyle(
+                        color: Colors.orange[700],
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                    ),
+                    SizedBox(height: 6),
+                    Text(
+                      '• 广告推广、商业宣传\n'
+                      '• 色情、暴力、血腥内容\n'
+                      '• 政治敏感、违法信息\n'
+                      '• 人身攻击、恶意谩骂\n'
+                      '• 虚假信息、恶意传播',
+                      style: TextStyle(
+                        color: Colors.orange[700],
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      '违规内容将被删除，严重违规者将被封禁账号。让我们共同维护温暖的心声社区！',
+                      style: TextStyle(
+                        color: Colors.orange[700],
+                        fontSize: 12,
+                        height: 1.4,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

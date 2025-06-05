@@ -5,6 +5,7 @@ import 'feedback_screen.dart';
 import 'user_agreement_screen.dart';
 import 'privacy_policy_screen.dart';
 import 'about_us_screen.dart';
+import 'my_reports_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   @override
@@ -44,6 +45,17 @@ class SettingsScreen extends StatelessWidget {
             // 功能设置分组
             _buildSectionTitle('功能设置'),
             SizedBox(height: 16),
+            _buildSettingItem(
+              context,
+              icon: Icons.flag_outlined,
+              title: '我的举报',
+              subtitle: '查看举报记录和处理状态',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => MyReportsScreen()),
+              ),
+            ),
+            SizedBox(height: 12),
             _buildSettingItem(
               context,
               icon: Icons.feedback_outlined,
