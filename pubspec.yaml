@@ -1,4 +1,4 @@
-name: 心声日记
+name: voice_diary
 description: 心声日记 - 专注于语音记录和情感分享的移动应用
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
