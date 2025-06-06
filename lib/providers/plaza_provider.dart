@@ -3,6 +3,7 @@ import '../models/plaza_post.dart';
 import '../models/comment.dart';
 import '../utils/mock_data.dart';
 import '../services/storage_service.dart';
+import '../services/block_service.dart';
 import 'dart:math';
 import 'package:provider/provider.dart';
 import 'profile_provider.dart';
@@ -50,6 +51,10 @@ class PlazaProvider extends ChangeNotifier {
       
       // 按时间排序，最新的在前面
       _posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      
+      // 过滤已屏蔽的帖子
+      await _filterBlockedPosts();
+      print('After filtering blocked posts: ${_posts.length} posts');
       
       if (_posts.isEmpty) {
         print('Warning: No posts were generated!');
@@ -136,6 +141,7 @@ class PlazaProvider extends ChangeNotifier {
       final comment = Comment(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         postId: postId,
+        userId: UserService.getCurrentUserId(), // 添加当前用户ID
         userName: '我',
         userAvatar: 'assets/images/head_image/head_1.jpeg',
         content: commentText,
@@ -319,5 +325,29 @@ class PlazaProvider extends ChangeNotifier {
   void toggleBrowseMode() {
     _isBrowseMode = !_isBrowseMode;
     notifyListeners();
+  }
+
+  // 屏蔽帖子
+  Future<void> blockPost(String postId) async {
+    try {
+      await BlockService.blockPost(postId);
+      // 从当前列表中移除被屏蔽的帖子
+      _posts.removeWhere((post) => post.id == postId);
+      notifyListeners();
+    } catch (e) {
+      print('屏蔽帖子失败: $e');
+    }
+  }
+
+  // 过滤已屏蔽的帖子（在加载时调用）
+  Future<void> _filterBlockedPosts() async {
+    try {
+      // 过滤被屏蔽的帖子
+      _posts = await BlockService.filterBlockedPosts(_posts, (post) => post.id);
+      // 过滤被屏蔽用户的内容
+      _posts = await BlockService.filterBlockedUserContent(_posts, (post) => post.userId);
+    } catch (e) {
+      print('过滤屏蔽帖子失败: $e');
+    }
   }
 } 

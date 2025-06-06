@@ -6,6 +6,7 @@ import 'user_agreement_screen.dart';
 import 'privacy_policy_screen.dart';
 import 'about_us_screen.dart';
 import 'my_reports_screen.dart';
+import 'blocked_content_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   @override
@@ -53,6 +54,17 @@ class SettingsScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => MyReportsScreen()),
+              ),
+            ),
+            SizedBox(height: 12),
+            _buildSettingItem(
+              context,
+              icon: Icons.block,
+              title: '屏蔽管理',
+              subtitle: '查看和管理已屏蔽的内容',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => BlockedContentScreen()),
               ),
             ),
             SizedBox(height: 12),

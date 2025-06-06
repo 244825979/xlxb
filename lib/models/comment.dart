@@ -1,6 +1,7 @@
 class Comment {
   final String id;
   final String postId;
+  final String? userId;
   final String userName;
   final String userAvatar;
   final String content;
@@ -9,6 +10,7 @@ class Comment {
   const Comment({
     required this.id,
     required this.postId,
+    this.userId,
     required this.userName,
     required this.userAvatar,
     required this.content,
@@ -18,6 +20,7 @@ class Comment {
   Comment copyWith({
     String? id,
     String? postId,
+    String? userId,
     String? userName,
     String? userAvatar,
     String? content,
@@ -26,6 +29,7 @@ class Comment {
     return Comment(
       id: id ?? this.id,
       postId: postId ?? this.postId,
+      userId: userId ?? this.userId,
       userName: userName ?? this.userName,
       userAvatar: userAvatar ?? this.userAvatar,
       content: content ?? this.content,
@@ -37,6 +41,7 @@ class Comment {
     return {
       'id': id,
       'postId': postId,
+      'userId': userId,
       'userName': userName,
       'userAvatar': userAvatar,
       'content': content,
@@ -48,6 +53,7 @@ class Comment {
     return Comment(
       id: json['id'],
       postId: json['postId'],
+      userId: json['userId'],
       userName: json['userName'],
       userAvatar: json['userAvatar'],
       content: json['content'],

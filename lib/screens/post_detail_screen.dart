@@ -10,6 +10,7 @@ import '../services/storage_service.dart';
 import '../widgets/report_dialog.dart';
 import '../services/report_service.dart';
 import '../services/user_service.dart';
+import '../services/block_service.dart';
 import 'image_view_screen.dart';
 
 class PostDetailScreen extends StatefulWidget {
@@ -49,9 +50,28 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     });
 
     try {
-      final comments = await _storageService.getComments(widget.post.id);
+      final allComments = await _storageService.getComments(widget.post.id);
+      print('Total comments loaded: ${allComments.length}'); // 调试信息
+      
+      // 过滤已屏蔽用户的评论，但不过滤当前用户的评论
+      final filteredComments = <Comment>[];
+      final blockedUsers = await BlockService.getBlockedUsers();
+      final currentUserId = UserService.getCurrentUserId();
+      
+      for (final comment in allComments) {
+        final commentUserId = comment.userId ?? 'unknown';
+        print('Comment by user: $commentUserId, blocked: ${blockedUsers.contains(commentUserId)}, is current: ${commentUserId == currentUserId}'); // 调试信息
+        
+        // 如果是当前用户的评论，或者不是被屏蔽用户的评论，则包含
+        if (commentUserId == currentUserId || !blockedUsers.contains(commentUserId)) {
+          filteredComments.add(comment);
+        }
+      }
+      
+      _comments = filteredComments;
+      print('Comments after filtering: ${_comments.length}'); // 调试信息
+      
       setState(() {
-        _comments = comments;
         _isLoading = false;
       });
     } catch (e) {
@@ -267,6 +287,108 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
+  // 屏蔽帖子
+  void _blockPost() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.block,
+                color: Colors.orange,
+                size: 24,
+              ),
+              SizedBox(width: 8),
+              Text(
+                '屏蔽内容',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '确定要屏蔽这条内容吗？',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppColors.textPrimary,
+                  height: 1.4,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                '屏蔽后，您将不会再看到这条内容，并会返回上一页。',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                '取消',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                // 执行屏蔽操作
+                final provider = Provider.of<PlazaProvider>(context, listen: false);
+                await provider.blockPost(widget.post.id);
+                // 显示成功提示
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('已屏蔽该内容'),
+                    backgroundColor: AppColors.playButton,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+                // 返回上一页
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
+              ),
+              child: Text(
+                '确定屏蔽',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   // 举报评论功能
   void _reportComment(Comment comment) {
     final reportService = ReportService();
@@ -286,6 +408,107 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     setState(() {
       _isCommentFieldReady = !shouldShow;
     });
+  }
+
+  // 屏蔽用户功能
+  void _blockUser(String userId, String userName) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.block,
+                color: Colors.orange,
+                size: 24,
+              ),
+              SizedBox(width: 8),
+              Text(
+                '屏蔽用户',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '确定要屏蔽用户 "$userName" 吗？',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppColors.textPrimary,
+                  height: 1.4,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                '屏蔽后，您将不会再看到该用户的任何内容和评论。',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                '取消',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                // 执行屏蔽操作
+                await BlockService.blockUser(userId);
+                // 重新加载评论列表
+                await _loadComments();
+                // 显示成功提示
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('已屏蔽用户 "$userName"'),
+                    backgroundColor: AppColors.playButton,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
+              ),
+              child: Text(
+                '确定屏蔽',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -312,17 +535,32 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           style: TextStyle(color: Colors.black),
         ),
         actions: [
-          TextButton(
-            onPressed: _reportPost,
-            child: Text(
-              '举报',
-              style: TextStyle(
-                color: Colors.red,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
+          // 屏蔽按钮 - 只对非当前用户的内容显示
+          if (!UserService.isCurrentUser(widget.post.userId))
+            TextButton(
+              onPressed: _blockPost,
+              child: Text(
+                '屏蔽',
+                style: TextStyle(
+                  color: Colors.orange,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
-          ),
+          // 举报按钮 - 只对非当前用户的内容显示
+          if (!UserService.isCurrentUser(widget.post.userId))
+            TextButton(
+              onPressed: _reportPost,
+              child: Text(
+                '举报',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
         ],
       ),
       body: Column(
@@ -470,6 +708,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           ..._comments.map((comment) => CommentItem(
                             comment: comment,
                             onReport: () => _reportComment(comment),
+                            onBlockUser: () => _blockUser(comment.userId ?? 'unknown', comment.userName),
                           )),
                       ],
                     ),
@@ -533,8 +772,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 class CommentItem extends StatelessWidget {
   final Comment comment;
   final VoidCallback onReport;
+  final VoidCallback onBlockUser;
 
-  const CommentItem({Key? key, required this.comment, required this.onReport}) : super(key: key);
+  const CommentItem({Key? key, required this.comment, required this.onReport, required this.onBlockUser}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -565,21 +805,41 @@ class CommentItem extends StatelessWidget {
                   fontSize: 12,
                 ),
               ),
-              Spacer(), // 推送举报按钮到右侧
-              GestureDetector(
-                onTap: onReport,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  child: Text(
-                    '举报',
-                    style: TextStyle(
-                      color: Colors.red,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+              Spacer(),
+              // 屏蔽用户按钮 - 只对非当前用户的评论显示
+              if (!UserService.isCurrentUser(comment.userId ?? 'unknown'))
+                GestureDetector(
+                  onTap: onBlockUser,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    child: Text(
+                      '屏蔽',
+                      style: TextStyle(
+                        color: Colors.orange,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ),
-              ),
+              if (!UserService.isCurrentUser(comment.userId ?? 'unknown'))
+                SizedBox(width: 8),
+              // 举报按钮 - 只对非当前用户的评论显示
+              if (!UserService.isCurrentUser(comment.userId ?? 'unknown'))
+                GestureDetector(
+                  onTap: onReport,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    child: Text(
+                      '举报',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
           SizedBox(height: 4),

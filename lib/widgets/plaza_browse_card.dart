@@ -11,11 +11,13 @@ import '../services/user_service.dart';
 class PlazaBrowseCard extends StatelessWidget {
   final PlazaPost post;
   final VoidCallback? onLike;
+  final VoidCallback? onBlock;
 
   const PlazaBrowseCard({
     Key? key,
     required this.post,
     this.onLike,
+    this.onBlock,
   }) : super(key: key);
 
   // 构建图片显示组件
@@ -186,75 +188,175 @@ class PlazaBrowseCard extends StatelessWidget {
             SizedBox(height: 8), // 文字和底部按钮之间的间距
             
             // 底部：互动区域
-            Padding(
-              padding: EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: Row(
+            Container(
+              margin: EdgeInsets.fromLTRB(8, 0, 8, 8),
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.grey.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
                 children: [
-                  GestureDetector(
-                    onTap: onLike,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          post.isLiked ? Icons.favorite : Icons.favorite_border,
-                          size: 16,
-                          color: post.isLiked ? Colors.red : AppColors.textSecondary,
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          '喜欢',
-                          style: TextStyle(
-                            color: post.isLiked ? Colors.red : AppColors.textSecondary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(width: 16),
+                  // 主要互动按钮
                   Row(
-                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.chat_bubble_outline,
-                        size: 16,
-                        color: AppColors.textSecondary,
-                      ),
-                      if (post.commentCount > 0) ...[
-                        SizedBox(width: 2),
-                        Text(
-                          '${post.commentCount}',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
+                      // 喜欢按钮
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: onLike,
+                          child: Container(
+                            padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: post.isLiked ? Colors.red.withOpacity(0.08) : Colors.transparent,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  post.isLiked ? Icons.favorite : Icons.favorite_border,
+                                  size: 18,
+                                  color: post.isLiked ? Colors.red : AppColors.textSecondary,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  '喜欢',
+                                  style: TextStyle(
+                                    color: post.isLiked ? Colors.red : AppColors.textSecondary,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ],
+                      ),
+                      SizedBox(width: 8),
+                      // 评论按钮
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PostDetailScreen(post: post),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.chat_bubble_outline,
+                                  size: 18,
+                                  color: AppColors.textSecondary,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  post.commentCount > 0 ? '${post.commentCount}' : '评论',
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
-                  Spacer(),
-                  // 举报按钮
-                  GestureDetector(
-                    onTap: () => _showReportDialog(context),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                  
+                  // 管理功能按钮 - 只对非当前用户的内容显示
+                  if (!UserService.isCurrentUser(post.userId)) ...[
+                    Container(
+                      margin: EdgeInsets.symmetric(vertical: 6),
+                      height: 0.5,
+                      color: Colors.grey.withOpacity(0.2),
+                    ),
+                    Row(
                       children: [
-                        Icon(
-                          Icons.flag_outlined,
-                          size: 16,
-                          color: AppColors.textSecondary,
-                        ),
-                        SizedBox(width: 2),
-                        Text(
-                          '举报',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 11,
+                        // 屏蔽按钮
+                        if (onBlock != null)
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: onBlock,
+                              child: Container(
+                                padding: EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.block,
+                                      size: 16,
+                                      color: Colors.orange.withOpacity(0.7),
+                                    ),
+                                    SizedBox(width: 3),
+                                    Text(
+                                      '屏蔽',
+                                      style: TextStyle(
+                                        color: Colors.orange.withOpacity(0.7),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        // 分隔线
+                        if (onBlock != null)
+                          Container(
+                            height: 12,
+                            width: 0.5,
+                            color: Colors.grey.withOpacity(0.2),
+                          ),
+                        // 举报按钮
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => _showReportDialog(context),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.flag_outlined,
+                                    size: 16,
+                                    color: Colors.red.withOpacity(0.7),
+                                  ),
+                                  SizedBox(width: 3),
+                                  Text(
+                                    '举报',
+                                    style: TextStyle(
+                                      color: Colors.red.withOpacity(0.7),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),

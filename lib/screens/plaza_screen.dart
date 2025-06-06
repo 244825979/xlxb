@@ -12,6 +12,7 @@ import '../widgets/plaza_browse_card.dart';
 import '../widgets/report_dialog.dart';
 import '../services/report_service.dart';
 import '../services/user_service.dart';
+import '../services/block_service.dart';
 
 class PlazaScreen extends StatelessWidget {
   @override
@@ -178,6 +179,7 @@ class PlazaScreen extends StatelessWidget {
         return PlazaBrowseCard(
           post: post,
           onLike: () => provider.toggleLike(post.id, context),
+          onBlock: () => _blockPost(context, post),
         );
       },
     );
@@ -344,26 +346,50 @@ class PlazaScreen extends StatelessWidget {
                       ],
                     ),
                     Spacer(),
-                    // 举报按钮
-                    GestureDetector(
-                      onTap: () => _showReportDialog(context, post),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.flag_outlined,
-                            size: 20,
-                            color: AppColors.textSecondary,
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            '举报',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    // 屏蔽按钮 - 只对非当前用户的内容显示
+                    if (!UserService.isCurrentUser(post.userId))
+                      GestureDetector(
+                        onTap: () => _blockPost(context, post),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.block,
+                              size: 20,
                               color: AppColors.textSecondary,
                             ),
-                          ),
-                        ],
+                            SizedBox(width: 4),
+                            Text(
+                              '屏蔽',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                    if (!UserService.isCurrentUser(post.userId))
+                      SizedBox(width: 16),
+                    // 举报按钮 - 只对非当前用户的内容显示
+                    if (!UserService.isCurrentUser(post.userId))
+                      GestureDetector(
+                        onTap: () => _showReportDialog(context, post),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.flag_outlined,
+                              size: 20,
+                              color: AppColors.textSecondary,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              '举报',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ],
@@ -422,6 +448,106 @@ class PlazaScreen extends StatelessWidget {
         targetType: 'post',
         targetId: reportService.generateTargetId(post.content),
       ),
+    );
+  }
+
+  // 屏蔽帖子
+  void _blockPost(BuildContext context, post) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.block,
+                color: Colors.orange,
+                size: 24,
+              ),
+              SizedBox(width: 8),
+              Text(
+                '屏蔽内容',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '确定要屏蔽这条内容吗？',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppColors.textPrimary,
+                  height: 1.4,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                '屏蔽后，您将不会再看到这条内容。',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                '取消',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                // 执行屏蔽操作
+                final provider = Provider.of<PlazaProvider>(context, listen: false);
+                await provider.blockPost(post.id);
+                // 显示成功提示
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('已屏蔽该内容'),
+                    backgroundColor: AppColors.playButton,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
+              ),
+              child: Text(
+                '确定屏蔽',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 } 
