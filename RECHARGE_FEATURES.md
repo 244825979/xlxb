@@ -9,18 +9,18 @@
 ### 1. 充值档次配置
 
 #### 金币充值选项
-- ￥12 - 840金币 (lelele_12)
-- ￥38 - 2660金币 (lelele_38) 
-- ￥68 - 4760金币 (lelele_68)
-- ￥98 - 6860金币 (lelele_98)
-- ￥198 - 13860金币 (lelele_198) **推荐**
-- ￥298 - 20860金币 (lelele_298)
-- ￥598 - 41860金币 (lelele_598)
+- ￥12 - 840金币 (xin_coin_ios_12)
+- ￥38 - 2660金币 (xin_coin_ios_38) 
+- ￥68 - 4760金币 (xin_coin_ios_68)
+- ￥98 - 6860金币 (xin_coin_ios_98)
+- ￥198 - 13860金币 (xin_coin_ios_198) **推荐**
+- ￥298 - 20860金币 (xin_coin_ios_298)
+- ￥598 - 41860金币 (xin_coin_ios_598)
 
 #### VIP会员套餐
-- ￥68 - 1个月VIP (lelelevip68)
-- ￥168 - 3个月VIP (lelelevip168) **最划算**
-- ￥399 - 12个月VIP (lelelevip399)
+- ￥68 - 1个月VIP (xin_vip_68)
+- ￥168 - 3个月VIP (xin_vip_168) **最划算**
+- ￥399 - 12个月VIP (xin_vip_399)
 
 ### 2. Apple ID绑定功能
 
@@ -75,8 +75,8 @@ dependencies:
 
 ### 商品ID配置
 所有商品ID已按照用户提供的数据配置：
-- 金币充值: `lelele_*`
-- VIP会员: `lelelevip*`
+- 金币充值: `xin_coin_ios_*`
+- VIP会员: `xin_vip_*`
 
 ## 使用说明
 
