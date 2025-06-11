@@ -65,10 +65,32 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
       final userIdentifier = _appleUserInfo?['userIdentifier'] as String?;
       
       if (userIdentifier != null) {
+        // 读取金币数量
+        final coins = prefs.getInt('user_coins_$userIdentifier') ?? 0;
+        
+        // 读取VIP状态
+        bool isVip = prefs.getBool('user_vip_status_$userIdentifier') ?? false;
+        
+        // 如果VIP状态为true，检查是否过期
+        if (isVip) {
+          final expireTime = prefs.getInt('user_vip_expire_time_$userIdentifier') ?? 0;
+          if (expireTime > 0) {
+            final expireDateTime = DateTime.fromMillisecondsSinceEpoch(expireTime);
+            if (DateTime.now().isAfter(expireDateTime)) {
+              // VIP已过期，重置状态
+              isVip = false;
+              await prefs.setBool('user_vip_status_$userIdentifier', false);
+              debugPrint('VIP已过期，自动重置状态');
+            }
+          }
+        }
+        
         setState(() {
-          _coins = prefs.getInt('${_coinsKey}_$userIdentifier') ?? 0;
-          _isVip = prefs.getBool('${_vipStatusKey}_$userIdentifier') ?? false;
+          _coins = coins;
+          _isVip = isVip;
         });
+        
+        debugPrint('加载用户状态 - 金币: $_coins, VIP: $_isVip');
       }
     } catch (e) {
       debugPrint('Load user status error: $e');
@@ -91,7 +113,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
       final userIdentifier = _appleUserInfo?['userIdentifier'] as String?;
       
       if (userIdentifier != null) {
-        await prefs.setInt('${_coinsKey}_$userIdentifier', newCoins);
+        await prefs.setInt('user_coins_$userIdentifier', newCoins);
         setState(() {
           _coins = newCoins;
         });
@@ -108,7 +130,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
       final userIdentifier = _appleUserInfo?['userIdentifier'] as String?;
       
       if (userIdentifier != null) {
-        await prefs.setBool('${_vipStatusKey}_$userIdentifier', isVip);
+        await prefs.setBool('user_vip_status_$userIdentifier', isVip);
         setState(() {
           _isVip = isVip;
         });
@@ -166,16 +188,8 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
       MaterialPageRoute(builder: (context) => RechargeScreen()),
     );
     
-    if (result != null && result['success'] == true) {
-      // 更新金币数量
-      if (result['coins'] != null) {
-        await _updateUserCoins(_coins + (result['coins'] as int));
-      }
-      // 更新VIP状态
-      if (result['isVip'] != null) {
-        await _updateVipStatus(result['isVip'] as bool);
-      }
-    }
+    // 充值页面返回后，重新加载用户状态以确保数据同步
+    await _loadUserStatus();
   }
 
   void _showSuccessSnackBar(String message) {

@@ -162,24 +162,57 @@ class _RechargeScreenState extends State<RechargeScreen> with TickerProviderStat
   }
 
   Future<void> _handlePurchaseSuccess() async {
-    if (_selectedRechargeItem != null) {
-      try {
-        final userInfo = await AppleSignInService.getCurrentUser();
-        if (userInfo != null) {
-          final userIdentifier = userInfo['userIdentifier'] as String?;
-          if (userIdentifier != null) {
-            final prefs = await SharedPreferences.getInstance();
+    try {
+      final userInfo = await AppleSignInService.getCurrentUser();
+      if (userInfo != null) {
+        final userIdentifier = userInfo['userIdentifier'] as String?;
+        if (userIdentifier != null) {
+          final prefs = await SharedPreferences.getInstance();
+          
+          // 处理金币充值
+          if (_selectedRechargeItem != null) {
             final currentCoins = prefs.getInt('user_coins_$userIdentifier') ?? 0;
             final newCoins = currentCoins + _selectedRechargeItem!.coins;
             await prefs.setInt('user_coins_$userIdentifier', newCoins);
             setState(() {
               _userCoins = newCoins;
             });
+            debugPrint('金币充值成功：+${_selectedRechargeItem!.coins}，当前余额：$newCoins');
+          }
+          
+          // 处理VIP开通
+          if (_selectedVipPackage != null) {
+            await prefs.setBool('user_vip_status_$userIdentifier', true);
+            
+            // 保存VIP开通时间和时长
+            final now = DateTime.now();
+            await prefs.setInt('user_vip_start_time_$userIdentifier', now.millisecondsSinceEpoch);
+            
+            // 根据VIP套餐设置到期时间
+            DateTime expireTime;
+            switch (_selectedVipPackage!.duration) {
+              case '1个月':
+                expireTime = now.add(Duration(days: 30));
+                break;
+              case '3个月':
+                expireTime = now.add(Duration(days: 90));
+                break;
+              case '12个月':
+                expireTime = now.add(Duration(days: 365));
+                break;
+              default:
+                expireTime = now.add(Duration(days: 30));
+            }
+            
+            await prefs.setInt('user_vip_expire_time_$userIdentifier', expireTime.millisecondsSinceEpoch);
+            await prefs.setString('user_vip_package_$userIdentifier', _selectedVipPackage!.duration);
+            
+            debugPrint('VIP开通成功：${_selectedVipPackage!.duration}，到期时间：${expireTime.toString()}');
           }
         }
-      } catch (e) {
-        debugPrint('Update user coins error: $e');
       }
+    } catch (e) {
+      debugPrint('Update user purchase data error: $e');
     }
   }
 
