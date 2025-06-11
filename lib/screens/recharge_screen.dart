@@ -236,33 +236,20 @@ class _RechargeScreenState extends State<RechargeScreen> with TickerProviderStat
           ),
           centerTitle: true,
           actions: [
-            if (kDebugMode)
-              IconButton(
-                onPressed: () async {
-                  _showErrorSnackBar('正在诊断App Store Connect配置...');
-                  await _purchaseService.diagnoseAppStoreConnectConfig();
-                  _showErrorSnackBar('诊断完成，请查看控制台日志');
-                },
-                icon: Icon(Icons.bug_report, color: AppColors.textSecondary),
-                tooltip: '诊断App Store配置',
-              ),
-            if (kDebugMode)
-              IconButton(
-                onPressed: () {
-                  final currentValue = InAppPurchaseService.forceUseMockPayment;
-                  InAppPurchaseService.setForceUseMockPayment(!currentValue);
-                  _showErrorSnackBar(!currentValue ? '已开启模拟支付模式' : '已关闭模拟支付模式');
-                },
-                icon: Icon(
-                  InAppPurchaseService.forceUseMockPayment ? Icons.science : Icons.science_outlined,
-                  color: InAppPurchaseService.forceUseMockPayment ? Colors.green : AppColors.textSecondary,
-                ),
-                tooltip: '开发模式：切换模拟支付',
-              ),
-            IconButton(
+            TextButton.icon(
               onPressed: () => _purchaseService.restorePurchases(),
-              icon: Icon(Icons.restore, color: AppColors.textSecondary),
-              tooltip: '恢复购买',
+              icon: Icon(Icons.restore, color: AppColors.primary, size: 18),
+              label: Text(
+                '恢复',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
             ),
           ],
         ),
@@ -339,7 +326,7 @@ class _RechargeScreenState extends State<RechargeScreen> with TickerProviderStat
                       Container(
                         margin: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                         decoration: BoxDecoration(
-                          color: Colors.grey[100],
+                          color: Colors.grey[200],
                           borderRadius: BorderRadius.circular(25),
                         ),
                         child: TabBar(
@@ -547,7 +534,7 @@ class _RechargeScreenState extends State<RechargeScreen> with TickerProviderStat
       onTap: () => _selectRechargeItem(item),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Colors.grey[50],
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected 
@@ -589,7 +576,7 @@ class _RechargeScreenState extends State<RechargeScreen> with TickerProviderStat
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primary : Colors.grey[100],
+                  color: isSelected ? AppColors.primary : Colors.grey[200],
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -618,7 +605,7 @@ class _RechargeScreenState extends State<RechargeScreen> with TickerProviderStat
         child: Container(
           padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Colors.grey[50],
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isSelected 
@@ -693,7 +680,7 @@ class _RechargeScreenState extends State<RechargeScreen> with TickerProviderStat
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primary : Colors.grey[100],
+                  color: isSelected ? AppColors.primary : Colors.grey[200],
                   borderRadius: BorderRadius.circular(25),
                 ),
                 child: Text(
