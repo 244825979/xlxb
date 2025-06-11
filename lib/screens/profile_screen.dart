@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_strings.dart';
 import '../providers/profile_provider.dart';
@@ -7,6 +8,7 @@ import '../utils/avatar_utils.dart';
 import '../models/voice_record.dart';
 import '../models/mood_data.dart';
 import '../services/storage_service.dart';
+import '../services/apple_signin_service.dart';
 import 'mood_history_screen.dart';
 import 'main_screen.dart';
 import 'liked_posts_screen.dart';
@@ -15,7 +17,74 @@ import 'settings_screen.dart';
 import 'recharge_screen.dart';
 import 'account_management_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
+  @override
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _isVip = false;
+  bool _isLoadingVip = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVipStatus();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 当页面重新显示时刷新VIP状态
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadVipStatus();
+    });
+  }
+
+  Future<void> _loadVipStatus() async {
+    try {
+      final isSignedIn = await AppleSignInService.isAppleSignedIn();
+      if (isSignedIn) {
+        final userInfo = await AppleSignInService.getCurrentUser();
+        if (userInfo != null) {
+          final userIdentifier = userInfo['userIdentifier'] as String?;
+          if (userIdentifier != null) {
+            final prefs = await SharedPreferences.getInstance();
+            bool isVip = prefs.getBool('user_vip_status_$userIdentifier') ?? false;
+            
+            // 如果VIP状态为true，检查是否过期
+            if (isVip) {
+              final expireTime = prefs.getInt('user_vip_expire_time_$userIdentifier') ?? 0;
+              if (expireTime > 0) {
+                final expireDateTime = DateTime.fromMillisecondsSinceEpoch(expireTime);
+                if (DateTime.now().isAfter(expireDateTime)) {
+                  // VIP已过期，重置状态
+                  isVip = false;
+                  await prefs.setBool('user_vip_status_$userIdentifier', false);
+                }
+              }
+            }
+            
+            setState(() {
+              _isVip = isVip;
+              _isLoadingVip = false;
+            });
+          }
+        }
+      } else {
+        setState(() {
+          _isVip = false;
+          _isLoadingVip = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isVip = false;
+        _isLoadingVip = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -99,11 +168,54 @@ class ProfileScreen extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      profile.name,
-                                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                    Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            profile.name,
+                                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: _isVip ? Colors.red[600] : null,
+                                            ),
+                                          ),
+                                        ),
+                                        if (_isVip) ...[
+                                          SizedBox(width: 8),
+                                          Container(
+                                            padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                colors: [
+                                                  Color(0xFFFFD700), // 金色
+                                                  Color(0xFFFFA500), // 橙色
+                                                ],
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
+                                              ),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  Icons.diamond,
+                                                  size: 12,
+                                                  color: Colors.white,
+                                                ),
+                                                SizedBox(width: 2),
+                                                Text(
+                                                  'VIP',
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ],
                                     ),
                                     SizedBox(height: 8),
                                     Text(
@@ -1151,13 +1263,15 @@ class ProfileScreen extends StatelessWidget {
   // 构建会员升级入口卡片
   Widget _buildPremiumUpgradeCard(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => RechargeScreen(),
           ),
         );
+        // 从充值页面返回后刷新VIP状态
+        _loadVipStatus();
       },
       child: Container(
         padding: EdgeInsets.all(20),
@@ -1222,13 +1336,15 @@ class ProfileScreen extends StatelessWidget {
   // 构建账户管理入口卡片
   Widget _buildAccountManagementCard(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => AccountManagementScreen(),
           ),
         );
+        // 从账户管理页面返回后刷新VIP状态
+        _loadVipStatus();
       },
       child: Container(
         padding: EdgeInsets.all(20),
