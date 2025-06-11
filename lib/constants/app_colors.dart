@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // 主色调
-  static const Color primary = Color(0xFFFF7272);
-  static const Color primaryLight = Color(0xFFFFEFEF);
-  static const Color primaryDark = Color(0xFFE86565);
+  static const Color primary = Color(0xFFFF6B6B);
+  static const Color primaryLight = Color(0xFFFFE5E5);
+  static const Color primaryDark = Color(0xFFFF4F4F);
   static const Color primaryBlue = Color(0xFF4A90E2); // 蓝色主题色，用于心情分析
   
   // 背景色
@@ -17,11 +17,11 @@ class AppColors {
   static const Color textLight = Color(0xFFB2BEC3);
   
   // 功能色
-  static const Color playButton = Color(0xFFFD6E6A);
-  static const Color playButtonHover = Color(0xFFE85F5B);
-  static const Color favoriteRed = Color(0xFFFD6E6A);
-  static const Color success = Color(0xFFFF9F7A);
-  static const Color warning = Color(0xFFFFB88C);
+  static const Color playButton = Color(0xFFFF6B6B);
+  static const Color playButtonHover = Color(0xFFFF4F4F);
+  static const Color favoriteRed = Color(0xFFFF6B6B);
+  static const Color success = Color(0xFF4CAF50);
+  static const Color warning = Color(0xFFFFB74D);
   static const Color error = Color(0xFFFF3B30);
   
   // 渐变色
@@ -29,7 +29,7 @@ class AppColors {
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [
-      Color(0xFFFFEFEF),
+      Color(0xFFFFE5E5),
       Color(0xFFFAFAFA),
     ],
   );
@@ -37,19 +37,19 @@ class AppColors {
   static const LinearGradient cardGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFFFE5E5), Color(0xFFFFF8F6)],
+    colors: [Color(0xFFFF6B6B), Color(0xFFFF4F4F)],
   );
   
   // 阴影色
   static BoxShadow get cardShadow => BoxShadow(
     blurRadius: 12,
-    color: primary.withOpacity(0.08),
+    color: primary.withOpacity(0.12),
     offset: const Offset(0, 4),
   );
   
   static BoxShadow get softShadow => BoxShadow(
     blurRadius: 8,
-    color: primary.withOpacity(0.06),
+    color: primary.withOpacity(0.08),
     offset: const Offset(0, 2),
   );
 } 

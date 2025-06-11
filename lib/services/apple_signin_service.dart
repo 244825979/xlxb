@@ -48,29 +48,28 @@ class AppleSignInService {
       if (!await SignInWithApple.isAvailable()) {
         throw Exception('Apple登录在此设备上不可用');
       }
-
+      
       // 执行Apple登录
       final credential = await SignInWithApple.getAppleIDCredential(
         scopes: [
           AppleIDAuthorizationScopes.email,
           AppleIDAuthorizationScopes.fullName,
         ],
-        webAuthenticationOptions: WebAuthenticationOptions(
-          clientId: 'your.app.bundle.id', // 需要替换为实际的客户端ID
-          redirectUri: Uri.parse('https://your-app.com/auth/callback'),
-        ),
+        nonce: 'apple_signin_${DateTime.now().millisecondsSinceEpoch}',
       );
 
       // 构建用户信息
+      final displayName = '${credential.givenName ?? ''} ${credential.familyName ?? ''}'.trim();
       final userInfo = {
         'userIdentifier': credential.userIdentifier,
         'email': credential.email ?? '',
         'givenName': credential.givenName ?? '',
         'familyName': credential.familyName ?? '',
-        'fullName': '${credential.givenName ?? ''} ${credential.familyName ?? ''}'.trim(),
+        'fullName': displayName.isEmpty ? 'Apple用户' : displayName,
         'bindTime': DateTime.now().millisecondsSinceEpoch,
         'authorizationCode': credential.authorizationCode,
         'identityToken': credential.identityToken,
+        'state': credential.state,
       };
 
       // 保存用户信息
@@ -80,6 +79,7 @@ class AppleSignInService {
         'authorizationCode': credential.authorizationCode,
         'identityToken': credential.identityToken,
         'userIdentifier': credential.userIdentifier,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
       }));
 
       _currentUser = userInfo;
@@ -87,23 +87,29 @@ class AppleSignInService {
       return {
         'success': true,
         'userInfo': userInfo,
-        'message': 'Apple登录绑定成功',
+        'message': 'Apple登录绑定成功！欢迎使用',
       };
     } catch (e) {
-      debugPrint('Apple sign in error: $e');
-      
       String errorMessage = 'Apple登录失败';
-      if (e.toString().contains('canceled')) {
+      
+      if (e.toString().contains('canceled') || e.toString().contains('cancelled')) {
         errorMessage = '用户取消了Apple登录';
       } else if (e.toString().contains('not available')) {
         errorMessage = 'Apple登录在此设备上不可用';
-      } else if (e.toString().contains('network')) {
+      } else if (e.toString().contains('network') || e.toString().contains('Network')) {
         errorMessage = '网络连接失败，请检查网络设置';
+      } else if (e.toString().contains('invalidResponse')) {
+        errorMessage = '登录响应无效，请重试';
+      } else if (e.toString().contains('1000')) {
+        errorMessage = 'Apple登录配置错误，请确保已在设备上登录Apple ID';
+      } else if (e.toString().contains('unknown')) {
+        errorMessage = '未知错误，请稍后重试';
       }
 
       return {
         'success': false,
         'message': errorMessage,
+        'error': e.toString(),
       };
     }
   }
@@ -135,12 +141,16 @@ class AppleSignInService {
     if (userInfo == null) return '';
     
     final fullName = userInfo['fullName'] as String? ?? '';
+    final givenName = userInfo['givenName'] as String? ?? '';
     final email = userInfo['email'] as String? ?? '';
     
-    if (fullName.isNotEmpty) {
+    if (fullName.isNotEmpty && fullName != 'Apple用户') {
       return fullName;
+    } else if (givenName.isNotEmpty) {
+      return givenName;
     } else if (email.isNotEmpty) {
-      return email.split('@').first;
+      final username = email.split('@').first;
+      return username.isNotEmpty ? username : 'Apple用户';
     } else {
       return 'Apple用户';
     }
@@ -152,24 +162,61 @@ class AppleSignInService {
     return userInfo['email'] as String? ?? '';
   }
 
-  // 验证Apple登录状态
-  static Future<bool> validateAppleSignIn() async {
+  // 检查Apple登录授权状态
+  static Future<Map<String, dynamic>> checkCredentialState() async {
     try {
       final userInfo = await getCurrentUser();
-      if (userInfo == null) return false;
+      if (userInfo == null) {
+        return {
+          'success': false,
+          'message': '未找到Apple登录信息',
+        };
+      }
 
-      // 这里可以添加更多的验证逻辑，比如检查token是否过期
-      final bindTime = userInfo['bindTime'] as int?;
-      if (bindTime == null) return false;
+      final userIdentifier = userInfo['userIdentifier'] as String?;
+      if (userIdentifier == null) {
+        return {
+          'success': false,
+          'message': '用户标识符无效',
+        };
+      }
 
-      // 检查绑定时间是否超过一定期限（比如30天）
-      final now = DateTime.now().millisecondsSinceEpoch;
-      final daysDiff = (now - bindTime) / (1000 * 60 * 60 * 24);
+      // 检查凭据状态
+      final credentialState = await SignInWithApple.getCredentialState(userIdentifier);
       
-      return daysDiff < 30; // 30天内有效
+      switch (credentialState) {
+        case CredentialState.authorized:
+          return {
+            'success': true,
+            'message': 'Apple登录状态正常',
+            'state': 'authorized',
+          };
+        case CredentialState.revoked:
+          return {
+            'success': false,
+            'message': 'Apple登录已被撤销',
+            'state': 'revoked',
+          };
+        case CredentialState.notFound:
+          return {
+            'success': false,
+            'message': '未找到Apple登录凭据',
+            'state': 'notFound',
+          };
+        default:
+          return {
+            'success': false,
+            'message': '未知的凭据状态',
+            'state': 'unknown',
+          };
+      }
     } catch (e) {
-      debugPrint('Validate Apple sign in error: $e');
-      return false;
+      debugPrint('Check credential state error: $e');
+      return {
+        'success': false,
+        'message': '检查登录状态失败',
+        'error': e.toString(),
+      };
     }
   }
 } 

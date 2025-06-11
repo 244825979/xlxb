@@ -355,7 +355,7 @@ class PlazaScreen extends StatelessWidget {
                                 textColor: AppColors.textSecondary,
                                 onTap: () => _blockPost(context, post),
                                 isSmall: isVerySmallScreen,
-                              ),
+                    ),
                               SizedBox(width: isVerySmallScreen ? 12 : 16),
                               _buildActionButton(
                                 icon: Icons.flag_outlined,
@@ -372,7 +372,7 @@ class PlazaScreen extends StatelessWidget {
                     } else {
                       // 普通模式：单行显示
                       return Row(
-                        children: [
+                      children: [
                           _buildActionButton(
                             icon: post.isLiked ? Icons.favorite : Icons.favorite_border,
                             iconColor: post.isLiked ? Colors.red : AppColors.textSecondary,
@@ -392,13 +392,13 @@ class PlazaScreen extends StatelessWidget {
                             isFlexible: true, // 评论文字可能比较长，允许弹性布局
                           ),
                           if (!isCurrentUserPost) ...[
-                            Spacer(),
+                    Spacer(),
                             _buildActionButton(
                               icon: Icons.block,
                               iconColor: AppColors.textSecondary,
                               text: '屏蔽',
                               textColor: AppColors.textSecondary,
-                              onTap: () => _blockPost(context, post),
+                        onTap: () => _blockPost(context, post),
                               isSmall: isSmallScreen,
                             ),
                             SizedBox(width: isSmallScreen ? 8 : 12),
@@ -407,7 +407,7 @@ class PlazaScreen extends StatelessWidget {
                               iconColor: AppColors.textSecondary,
                               text: '举报',
                               textColor: AppColors.textSecondary,
-                              onTap: () => _showReportDialog(context, post),
+                        onTap: () => _showReportDialog(context, post),
                               isSmall: isSmallScreen,
                             ),
                           ],

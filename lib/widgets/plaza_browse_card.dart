@@ -240,200 +240,200 @@ class PlazaBrowseCard extends StatelessWidget {
                 }
                 
                 return Container(
-                  margin: EdgeInsets.fromLTRB(8, 0, 8, 8),
+              margin: EdgeInsets.fromLTRB(8, 0, 8, 8),
                   padding: EdgeInsets.all(getPadding()),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
+              decoration: BoxDecoration(
+                color: Colors.grey.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  // 主要互动按钮
+                  Row(
                     children: [
-                      // 主要互动按钮
-                      Row(
-                        children: [
-                          // 喜欢按钮
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: onLike,
-                              child: Container(
+                      // 喜欢按钮
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: onLike,
+                          child: Container(
                                 padding: EdgeInsets.symmetric(
                                   vertical: (getPadding() - 2).clamp(1, 8), 
                                   horizontal: getHorizontalPadding(),
                                 ),
-                                decoration: BoxDecoration(
-                                  color: post.isLiked ? Colors.red.withOpacity(0.08) : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                            decoration: BoxDecoration(
+                              color: post.isLiked ? Colors.red.withOpacity(0.08) : Colors.transparent,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                                   mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      post.isLiked ? Icons.favorite : Icons.favorite_border,
+                              children: [
+                                Icon(
+                                  post.isLiked ? Icons.favorite : Icons.favorite_border,
                                       size: getIconSize(),
-                                      color: post.isLiked ? Colors.red : AppColors.textSecondary,
-                                    ),
+                                  color: post.isLiked ? Colors.red : AppColors.textSecondary,
+                                ),
                                     SizedBox(width: getSpacing()),
                                     Flexible(
                                       child: Text(
-                                        '喜欢',
-                                        style: TextStyle(
-                                          color: post.isLiked ? Colors.red : AppColors.textSecondary,
+                                  '喜欢',
+                                  style: TextStyle(
+                                    color: post.isLiked ? Colors.red : AppColors.textSecondary,
                                           fontSize: getFontSize(),
-                                          fontWeight: FontWeight.w500,
+                                    fontWeight: FontWeight.w500,
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                         maxLines: 1,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: getSpacing() * 2),
-                          // 评论按钮
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => PostDetailScreen(post: post),
                                   ),
-                                );
-                              },
-                              child: Container(
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                          SizedBox(width: getSpacing() * 2),
+                      // 评论按钮
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PostDetailScreen(post: post),
+                              ),
+                            );
+                          },
+                          child: Container(
                                 padding: EdgeInsets.symmetric(
                                   vertical: (getPadding() - 2).clamp(1, 8), 
                                   horizontal: getHorizontalPadding(),
                                 ),
-                                decoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                            decoration: BoxDecoration(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                                   mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.chat_bubble_outline,
+                              children: [
+                                Icon(
+                                  Icons.chat_bubble_outline,
                                       size: getIconSize(),
-                                      color: AppColors.textSecondary,
-                                    ),
+                                  color: AppColors.textSecondary,
+                                ),
                                     SizedBox(width: getSpacing()),
                                     Flexible(
                                       child: Text(
-                                        post.commentCount > 0 ? '${post.commentCount}' : '评论',
-                                        style: TextStyle(
-                                          color: AppColors.textSecondary,
+                                  post.commentCount > 0 ? '${post.commentCount}' : '评论',
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
                                           fontSize: getFontSize(),
-                                          fontWeight: FontWeight.w500,
+                                    fontWeight: FontWeight.w500,
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                         maxLines: 1,
-                                      ),
-                                    ),
-                                  ],
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                  
-                      // 管理功能按钮 - 只对非当前用户的内容显示
-                      if (!UserService.isCurrentUser(post.userId)) ...[
-                        Container(
-                          margin: EdgeInsets.symmetric(vertical: 6),
-                          height: 0.5,
-                          color: Colors.grey.withOpacity(0.2),
                         ),
-                        Row(
-                          children: [
-                            // 屏蔽按钮
-                            if (onBlock != null)
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: onBlock,
-                                  child: Container(
+                      ),
+                    ],
+                  ),
+                  
+                  // 管理功能按钮 - 只对非当前用户的内容显示
+                  if (!UserService.isCurrentUser(post.userId)) ...[
+                    Container(
+                      margin: EdgeInsets.symmetric(vertical: 6),
+                      height: 0.5,
+                      color: Colors.grey.withOpacity(0.2),
+                    ),
+                    Row(
+                      children: [
+                        // 屏蔽按钮
+                        if (onBlock != null)
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: onBlock,
+                              child: Container(
                                     padding: EdgeInsets.symmetric(
                                       vertical: (getPadding() - 3).clamp(1, 6), 
                                       horizontal: (getHorizontalPadding() * 0.75).clamp(1, 6),
                                     ),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.block,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.block,
                                           size: getIconSize() - 2,
-                                          color: Colors.orange.withOpacity(0.7),
-                                        ),
+                                      color: Colors.orange.withOpacity(0.7),
+                                    ),
                                         SizedBox(width: getSpacing()),
                                         Flexible(
                                           child: Text(
-                                            '屏蔽',
-                                            style: TextStyle(
-                                              color: Colors.orange.withOpacity(0.7),
+                                      '屏蔽',
+                                      style: TextStyle(
+                                        color: Colors.orange.withOpacity(0.7),
                                               fontSize: (getFontSize() - 1).clamp(6, 12),
-                                              fontWeight: FontWeight.w400,
+                                        fontWeight: FontWeight.w400,
                                             ),
                                             overflow: TextOverflow.ellipsis,
                                             maxLines: 1,
-                                          ),
-                                        ),
-                                      ],
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ),
                               ),
+                            ),
+                          ),
 
-                            // 举报按钮
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () => _showReportDialog(context),
-                                child: Container(
+                        // 举报按钮
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => _showReportDialog(context),
+                            child: Container(
                                   padding: EdgeInsets.symmetric(
                                     vertical: (getPadding() - 3).clamp(1, 6), 
                                     horizontal: (getHorizontalPadding() * 0.75).clamp(1, 6),
                                   ),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.flag_outlined,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.flag_outlined,
                                         size: getIconSize() - 2,
-                                        color: Colors.red.withOpacity(0.7),
-                                      ),
+                                    color: Colors.red.withOpacity(0.7),
+                                  ),
                                       SizedBox(width: getSpacing()),
                                       Flexible(
                                         child: Text(
-                                          '举报',
-                                          style: TextStyle(
-                                            color: Colors.red.withOpacity(0.7),
+                                    '举报',
+                                    style: TextStyle(
+                                      color: Colors.red.withOpacity(0.7),
                                             fontSize: (getFontSize() - 1).clamp(6, 12),
-                                            fontWeight: FontWeight.w400,
+                                      fontWeight: FontWeight.w400,
                                           ),
                                           overflow: TextOverflow.ellipsis,
                                           maxLines: 1,
-                                        ),
-                                      ),
-                                    ],
+                                    ),
                                   ),
-                                ),
+                                ],
                               ),
                             ),
-                          ],
+                          ),
                         ),
                       ],
-                    ],
-                  ),
+                    ),
+                  ],
+                ],
+              ),
                 );
               },
             ),

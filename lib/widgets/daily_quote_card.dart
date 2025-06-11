@@ -125,100 +125,62 @@ class DailyQuoteCard extends StatelessWidget {
                 children: [
                   // 装饰文字单独一行
                   Row(
-                    children: [
-                      Container(
+            children: [
+              Container(
                         padding: EdgeInsets.symmetric(
                           horizontal: isSmallScreen ? 8 : 12, 
                           vertical: 4,
                         ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '愿你心怀暖阳',
-                          style: TextStyle(
-                            color: AppColors.playButton,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '愿你心怀暖阳',
+                  style: TextStyle(
+                    color: AppColors.playButton,
                             fontSize: isSmallScreen ? 11 : 12,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
                     ],
                   ),
                   SizedBox(height: 12),
                   // 按钮组
-                  Row(
+              Row(
                     mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Consumer<QuotesProvider>(
-                        builder: (context, provider, child) {
-                          final isLiked = provider.isQuoteLiked(displayQuote);
-                          return Container(
+                children: [
+                  Consumer<QuotesProvider>(
+                    builder: (context, provider, child) {
+                      final isLiked = provider.isQuoteLiked(displayQuote);
+                      return Container(
                             margin: EdgeInsets.only(right: isSmallScreen ? 6 : 8),
-                            child: Material(
-                              color: isLiked ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
+                        child: Material(
+                          color: isLiked ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
                               borderRadius: BorderRadius.circular(16),
-                              child: InkWell(
+                          child: InkWell(
                                 borderRadius: BorderRadius.circular(16),
-                                onTap: () => provider.toggleLike(displayQuote, context),
-                                child: Padding(
+                            onTap: () => provider.toggleLike(displayQuote, context),
+                            child: Padding(
                                   padding: EdgeInsets.symmetric(
                                     horizontal: isSmallScreen ? 8 : 10, 
                                     vertical: isSmallScreen ? 4 : 6,
                                   ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        isLiked ? Icons.favorite : Icons.favorite_border,
-                                        color: isLiked ? AppColors.favoriteRed : AppColors.textSecondary,
-                                        size: isSmallScreen ? 14 : 16,
-                                      ),
-                                      SizedBox(width: 3),
-                                      Text(
-                                        isLiked ? '已喜欢' : '喜欢',
-                                        style: TextStyle(
-                                          color: isLiked ? AppColors.favoriteRed : AppColors.textSecondary,
-                                          fontSize: isSmallScreen ? 10 : 11,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      // 举报按钮
-                      Container(
-                        margin: EdgeInsets.only(right: isSmallScreen ? 6 : 8),
-                        child: Material(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(16),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(16),
-                            onTap: () => _showReportDialog(context, displayQuote, reportService),
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: isSmallScreen ? 8 : 10, 
-                                vertical: isSmallScreen ? 4 : 6,
-                              ),
                               child: Row(
-                                mainAxisSize: MainAxisSize.min,
+                                    mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    Icons.flag_outlined,
-                                    color: AppColors.textSecondary,
-                                    size: isSmallScreen ? 14 : 16,
+                                    isLiked ? Icons.favorite : Icons.favorite_border,
+                                    color: isLiked ? AppColors.favoriteRed : AppColors.textSecondary,
+                                        size: isSmallScreen ? 14 : 16,
                                   ),
-                                  SizedBox(width: 3),
+                                      SizedBox(width: 3),
                                   Text(
-                                    '举报',
+                                    isLiked ? '已喜欢' : '喜欢',
                                     style: TextStyle(
-                                      color: AppColors.textSecondary,
-                                      fontSize: isSmallScreen ? 10 : 11,
+                                      color: isLiked ? AppColors.favoriteRed : AppColors.textSecondary,
+                                          fontSize: isSmallScreen ? 10 : 11,
                                     ),
                                   ),
                                 ],
@@ -226,49 +188,87 @@ class DailyQuoteCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                      ),
-                      // 查看更多按钮
-                      Material(
-                        color: AppColors.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(16),
-                        child: InkWell(
+                      );
+                    },
+                  ),
+                  // 举报按钮
+                  Container(
+                        margin: EdgeInsets.only(right: isSmallScreen ? 6 : 8),
+                    child: Material(
+                      color: Colors.transparent,
                           borderRadius: BorderRadius.circular(16),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => QuotesScreen()),
-                            );
-                          },
-                          child: Padding(
+                      child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                        onTap: () => _showReportDialog(context, displayQuote, reportService),
+                        child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isSmallScreen ? 8 : 10, 
+                                vertical: isSmallScreen ? 4 : 6,
+                              ),
+                          child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.flag_outlined,
+                                color: AppColors.textSecondary,
+                                    size: isSmallScreen ? 14 : 16,
+                              ),
+                                  SizedBox(width: 3),
+                              Text(
+                                '举报',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                      fontSize: isSmallScreen ? 10 : 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                      // 查看更多按钮
+                  Material(
+                    color: AppColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
+                    child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => QuotesScreen()),
+                        );
+                      },
+                      child: Padding(
                             padding: EdgeInsets.symmetric(
                               horizontal: isSmallScreen ? 8 : 10, 
                               vertical: isSmallScreen ? 4 : 6,
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  '查看更多',
-                                  style: TextStyle(
-                                    color: AppColors.playButton,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '查看更多',
+                              style: TextStyle(
+                                color: AppColors.playButton,
                                     fontSize: isSmallScreen ? 10 : 11,
                                     fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                SizedBox(width: 2),
-                                Icon(
-                                  Icons.arrow_forward_ios,
-                                  color: AppColors.playButton,
-                                  size: isSmallScreen ? 10 : 12,
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
+                            SizedBox(width: 2),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              color: AppColors.playButton,
+                                  size: isSmallScreen ? 10 : 12,
+                            ),
+                          ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ],
+              ),
+            ],
               );
             },
           ),

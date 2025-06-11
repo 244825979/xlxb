@@ -28,20 +28,20 @@ class InAppPurchaseService {
 
   // 充值商品ID列表
   static const List<String> _rechargeProductIds = [
-    'xin_coin_ios_12',
-    'xin_coin_ios_38', 
-    'xin_coin_ios_68',
-    'xin_coin_ios_98',
-    'xin_coin_ios_198',
-    'xin_coin_ios_298',
-    'xin_coin_ios_598',
+    'lelele_12',
+    'lelele_38', 
+    'lelele_68',
+    'lelele_98',
+    'lelele_198',
+    'lelele_298',
+    'lelele_598',
   ];
 
   // VIP商品ID列表
   static const List<String> _vipProductIds = [
-    'xin_vip_68',
-    'xin_vip_168',
-    'xin_vip_399',
+    'lelelevip68',
+    'lelelevip168',
+    'lelelevip399',
   ];
 
   // 所有商品ID
@@ -261,13 +261,13 @@ class InAppPurchaseService {
   /// 获取充值商品列表
   List<RechargeItem> getRechargeItems() {
     final rechargeData = [
-      {'productId': 'xin_coin_ios_12', 'price': 12.0, 'coins': 840},
-      {'productId': 'xin_coin_ios_38', 'price': 38.0, 'coins': 2660},
-      {'productId': 'xin_coin_ios_68', 'price': 68.0, 'coins': 4760},
-      {'productId': 'xin_coin_ios_98', 'price': 98.0, 'coins': 6860},
-      {'productId': 'xin_coin_ios_198', 'price': 198.0, 'coins': 13860},
-      {'productId': 'xin_coin_ios_298', 'price': 298.0, 'coins': 20860},
-      {'productId': 'xin_coin_ios_598', 'price': 598.0, 'coins': 41860},
+      {'productId': 'lelele_12', 'price': 12.0, 'coins': 840},
+      {'productId': 'lelele_38', 'price': 38.0, 'coins': 2660},
+      {'productId': 'lelele_68', 'price': 68.0, 'coins': 4760},
+      {'productId': 'lelele_98', 'price': 98.0, 'coins': 6860},
+      {'productId': 'lelele_198', 'price': 198.0, 'coins': 13860},
+      {'productId': 'lelele_298', 'price': 298.0, 'coins': 20860},
+      {'productId': 'lelele_598', 'price': 598.0, 'coins': 41860},
     ];
 
     // 在调试模式下，即使服务初始化了也始终返回商品列表（用于测试）
@@ -306,9 +306,9 @@ class InAppPurchaseService {
   /// 获取VIP套餐列表
   List<VipPackage> getVipPackages() {
     final vipData = [
-      {'productId': 'xin_vip_68', 'price': 68.0, 'duration': '1个月'},
-      {'productId': 'xin_vip_168', 'price': 168.0, 'duration': '3个月'},
-      {'productId': 'xin_vip_399', 'price': 399.0, 'duration': '12个月'},
+      {'productId': 'lelelevip68', 'price': 68.0, 'duration': '1个月'},
+      {'productId': 'lelelevip168', 'price': 168.0, 'duration': '3个月'},
+      {'productId': 'lelelevip399', 'price': 399.0, 'duration': '12个月'},
     ];
 
     // 在调试模式下，即使服务初始化了也始终返回VIP套餐列表（用于测试）
@@ -542,16 +542,16 @@ class InAppPurchaseService {
   /// 获取商品价格（用于创建模拟商品）
   double _getProductPrice(String productId) {
     final priceMap = {
-      'xin_coin_ios_12': 12.0,
-      'xin_coin_ios_38': 38.0,
-      'xin_coin_ios_68': 68.0,
-      'xin_coin_ios_98': 98.0,
-      'xin_coin_ios_198': 198.0,
-      'xin_coin_ios_298': 298.0,
-      'xin_coin_ios_598': 598.0,
-      'xin_vip_68': 68.0,
-      'xin_vip_168': 168.0,
-      'xin_vip_399': 399.0,
+      'lelele_12': 12.0,
+      'lelele_38': 38.0,
+      'lelele_68': 68.0,
+      'lelele_98': 98.0,
+      'lelele_198': 198.0,
+      'lelele_298': 298.0,
+      'lelele_598': 598.0,
+      'lelelevip68': 68.0,
+      'lelelevip168': 168.0,
+      'lelelevip399': 399.0,
     };
     return priceMap[productId] ?? 0.0;
   }

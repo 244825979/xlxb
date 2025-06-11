@@ -11,28 +11,110 @@ class AccountManagementScreen extends StatefulWidget {
 }
 
 class _AccountManagementScreenState extends State<AccountManagementScreen> {
+  static const String _coinsKey = 'user_coins';
+  static const String _vipStatusKey = 'user_vip_status';
+  
   Map<String, dynamic>? _appleUserInfo;
   bool _isLoading = false;
   bool _isAppleSignedIn = false;
+  int _coins = 0;
+  bool _isVip = false;
 
   @override
   void initState() {
     super.initState();
-    _loadAppleSignInInfo();
+    _loadUserData();
   }
 
-  Future<void> _loadAppleSignInInfo() async {
+  // 加载用户数据
+  Future<void> _loadUserData() async {
     setState(() => _isLoading = true);
     
     try {
+      // 加载Apple登录状态
       _isAppleSignedIn = await AppleSignInService.isAppleSignedIn();
       if (_isAppleSignedIn) {
         _appleUserInfo = await AppleSignInService.getCurrentUser();
+        
+        // 检查Apple登录凭据状态
+        final credentialState = await AppleSignInService.checkCredentialState();
+        if (!credentialState['success']) {
+          debugPrint('Apple credential state check failed: ${credentialState['message']}');
+          if (credentialState['state'] == 'revoked' || credentialState['state'] == 'notFound') {
+            await _handleSignOut();
+          }
+        } else {
+          // 加载用户金币和VIP状态
+          await _loadUserStatus();
+        }
+      } else {
+        // 未登录时重置状态
+        await _resetUserStatus();
       }
     } catch (e) {
-      debugPrint('Load Apple sign in info error: $e');
+      debugPrint('Load user data error: $e');
     } finally {
       setState(() => _isLoading = false);
+    }
+  }
+
+  // 加载用户状态（金币和VIP）
+  Future<void> _loadUserStatus() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userIdentifier = _appleUserInfo?['userIdentifier'] as String?;
+      
+      if (userIdentifier != null) {
+        setState(() {
+          _coins = prefs.getInt('${_coinsKey}_$userIdentifier') ?? 0;
+          _isVip = prefs.getBool('${_vipStatusKey}_$userIdentifier') ?? false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Load user status error: $e');
+    }
+  }
+
+  // 重置用户状态
+  Future<void> _resetUserStatus() async {
+    setState(() {
+      _coins = 0;
+      _isVip = false;
+      _appleUserInfo = null;
+    });
+  }
+
+  // 更新用户金币
+  Future<void> _updateUserCoins(int newCoins) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userIdentifier = _appleUserInfo?['userIdentifier'] as String?;
+      
+      if (userIdentifier != null) {
+        await prefs.setInt('${_coinsKey}_$userIdentifier', newCoins);
+        setState(() {
+          _coins = newCoins;
+        });
+      }
+    } catch (e) {
+      debugPrint('Update user coins error: $e');
+    }
+  }
+
+  // 更新VIP状态
+  Future<void> _updateVipStatus(bool isVip) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userIdentifier = _appleUserInfo?['userIdentifier'] as String?;
+      
+      if (userIdentifier != null) {
+        await prefs.setBool('${_vipStatusKey}_$userIdentifier', isVip);
+        setState(() {
+          _isVip = isVip;
+        });
+      }
+    } catch (e) {
+      debugPrint('Update VIP status error: $e');
     }
   }
 
@@ -47,9 +129,11 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           _isAppleSignedIn = true;
           _appleUserInfo = result['userInfo'];
         });
+        // 登录成功后加载用户状态
+        await _loadUserStatus();
         _showSuccessSnackBar(result['message']);
       } else {
-        _showErrorSnackBar(result['message']);
+        _showErrorSnackBar(result['message'] ?? 'Apple登录失败');
       }
     } catch (e) {
       _showErrorSnackBar('Apple登录失败: $e');
@@ -58,89 +142,40 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     }
   }
 
-  Future<void> _handleAppleSignOut() async {
-    final confirmed = await _showConfirmDialog(
-      '解除Apple登录绑定',
-      '解除绑定后将无法使用Apple支付功能，确定要继续吗？',
-    );
-    
-    if (confirmed) {
-      setState(() => _isLoading = true);
-      
-      try {
-        final result = await AppleSignInService.signOutApple();
-        
-        if (result['success']) {
-          setState(() {
-            _isAppleSignedIn = false;
-            _appleUserInfo = null;
-          });
-          _showSuccessSnackBar(result['message']);
-        } else {
-          _showErrorSnackBar(result['message']);
-        }
-      } catch (e) {
-        _showErrorSnackBar('解除绑定失败: $e');
-      } finally {
-        setState(() => _isLoading = false);
+  Future<void> _handleSignOut() async {
+    try {
+      final result = await AppleSignInService.signOutApple();
+      if (result['success']) {
+        await _resetUserStatus();
+        setState(() {
+          _isAppleSignedIn = false;
+        });
+        _showSuccessSnackBar(result['message']);
+      } else {
+        _showErrorSnackBar(result['message']);
       }
+    } catch (e) {
+      _showErrorSnackBar('解除绑定失败: $e');
     }
   }
 
-  Future<bool> _showConfirmDialog(String title, String content) async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-            fontSize: 18,
-          ),
-        ),
-        content: Text(
-          content,
-          style: TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 15,
-            height: 1.4,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(
-              '取消',
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 16,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade400,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            ),
-            child: Text(
-              '确定',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
+  // 处理充值页面返回
+  Future<void> _handleRecharge() async {
+    final result = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(builder: (context) => RechargeScreen()),
     );
-    return result ?? false;
+    
+    if (result != null && result['success'] == true) {
+      // 更新金币数量
+      if (result['coins'] != null) {
+        await _updateUserCoins(_coins + (result['coins'] as int));
+      }
+      // 更新VIP状态
+      if (result['isVip'] != null) {
+        await _updateVipStatus(result['isVip'] as bool);
+      }
+    }
   }
 
   void _showSuccessSnackBar(String message) {
@@ -150,10 +185,10 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           children: [
             Icon(Icons.check_circle, color: Colors.white, size: 20),
             SizedBox(width: 8),
-            Expanded(child: Text(message, style: TextStyle(fontSize: 15))),
+            Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: Colors.green.shade400,
+        backgroundColor: Colors.green,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: EdgeInsets.all(16),
@@ -168,10 +203,10 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           children: [
             Icon(Icons.error_outline, color: Colors.white, size: 20),
             SizedBox(width: 8),
-            Expanded(child: Text(message, style: TextStyle(fontSize: 15))),
+            Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: Colors.red.shade400,
+        backgroundColor: Colors.red,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: EdgeInsets.all(16),
@@ -218,23 +253,23 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           centerTitle: true,
         ),
         body: _isLoading
-            ? Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-                ),
-              )
-            : SingleChildScrollView(
-                padding: EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    _buildAccountCard(),
-                    SizedBox(height: 24),
-                    _buildAppleSignInCard(),
-                    SizedBox(height: 24),
-                    _buildRechargeButton(),
-                  ],
-                ),
+          ? Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
               ),
+            )
+          : SingleChildScrollView(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  _buildAccountCard(),
+                  SizedBox(height: 24),
+                  _buildAppleSignInCard(),
+                  SizedBox(height: 24),
+                  _buildRechargeButton(),
+                ],
+              ),
+            ),
       ),
     );
   }
@@ -256,15 +291,24 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
       ),
       child: Column(
         children: [
-          // 余额信息
           Row(
             children: [
               Expanded(
-                child: _buildInfoCard('金币余额', '9,900', Icons.monetization_on, Colors.orange),
+                child: _buildInfoCard(
+                  '金币余额',
+                  _isAppleSignedIn ? _formatNumber(_coins) : '0',
+                  Icons.monetization_on,
+                  Colors.orange
+                ),
               ),
               SizedBox(width: 16),
               Expanded(
-                child: _buildInfoCard('VIP状态', '未开通', Icons.star, Colors.purple),
+                child: _buildInfoCard(
+                  'VIP状态',
+                  _isAppleSignedIn ? (_isVip ? '已开通' : '未开通') : '未开通',
+                  Icons.star,
+                  _isVip ? Colors.purple : Colors.grey
+                ),
               ),
             ],
           ),
@@ -434,7 +478,18 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: _handleAppleSignOut,
+                onPressed: () async {
+                  final result = await AppleSignInService.signOutApple();
+                  if (result['success']) {
+                    setState(() {
+                      _isAppleSignedIn = false;
+                      _appleUserInfo = null;
+                    });
+                    _showSuccessSnackBar(result['message']);
+                  } else {
+                    _showErrorSnackBar(result['message']);
+                  }
+                },
                 icon: Icon(Icons.logout, size: 18),
                 label: Text('解除绑定'),
                 style: OutlinedButton.styleFrom(
@@ -532,6 +587,14 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
     );
   }
 
+  String _formatNumber(int number) {
+    if (number >= 1000) {
+      double value = number / 1000.0;
+      return '${value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 1)}K';
+    }
+    return number.toString();
+  }
+
   Widget _buildRechargeButton() {
     return Container(
       width: double.infinity,
@@ -552,15 +615,10 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
         ],
       ),
       child: ElevatedButton.icon(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => RechargeScreen()),
-          );
-        },
+        onPressed: _isAppleSignedIn ? _handleRecharge : null,
         icon: Icon(Icons.add_card, color: Colors.white, size: 24),
         label: Text(
-          '立即充值',
+          _isAppleSignedIn ? '立即充值' : '请先登录',
           style: TextStyle(
             color: Colors.white,
             fontSize: 18,
@@ -573,6 +631,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
+          disabledBackgroundColor: Colors.grey.withOpacity(0.3),
         ),
       ),
     );

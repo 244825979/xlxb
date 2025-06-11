@@ -12,9 +12,6 @@ import 'chat_screen.dart';
 import 'profile_screen.dart';
 
 class MainScreen extends StatefulWidget {
-  // 添加全局键，让其他页面可以访问MainScreen的状态
-  static final GlobalKey<_MainScreenState> mainScreenKey = GlobalKey<_MainScreenState>();
-
   // 添加key参数
   const MainScreen({Key? key}) : super(key: key);
 
@@ -93,7 +90,6 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: MainScreen.mainScreenKey, // 设置全局键
       body: Container(
         decoration: BoxDecoration(
           gradient: AppColors.backgroundGradient,
