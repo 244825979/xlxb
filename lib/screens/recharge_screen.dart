@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import '../constants/app_colors.dart';
 import '../services/in_app_purchase_service.dart';
+import '../services/apple_signin_service.dart';
 import '../models/purchase_models.dart';
 import 'vip_privileges_screen.dart';
+import 'account_management_screen.dart';
 
 class RechargeScreen extends StatefulWidget {
   @override
@@ -24,6 +27,8 @@ class _RechargeScreenState extends State<RechargeScreen> with TickerProviderStat
   VipPackage? _selectedVipPackage;
   bool _isLoading = false;
   bool _isPurchasing = false;
+  int _userCoins = 0;
+  bool _isLoggedIn = false;
   
   @override
   void initState() {
@@ -33,6 +38,7 @@ class _RechargeScreenState extends State<RechargeScreen> with TickerProviderStat
       vsync: this,
       animationDuration: Duration(milliseconds: 300),
     );
+    _loadUserStatus();
     _initializePurchaseService();
   }
 
@@ -41,6 +47,46 @@ class _RechargeScreenState extends State<RechargeScreen> with TickerProviderStat
     _purchaseSubscription?.cancel();
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadUserStatus() async {
+    try {
+      final isSignedIn = await AppleSignInService.isAppleSignedIn();
+      setState(() {
+        _isLoggedIn = isSignedIn;
+        _userCoins = isSignedIn ? 0 : 0; // 如果未登录显示0，登录后需要从存储中读取实际金币数
+      });
+      
+      // 如果已登录，从本地存储读取金币数量
+      if (isSignedIn) {
+        await _loadUserCoins();
+      }
+    } catch (e) {
+      debugPrint('Load user status error: $e');
+      setState(() {
+        _isLoggedIn = false;
+        _userCoins = 0;
+      });
+    }
+  }
+
+  Future<void> _loadUserCoins() async {
+    try {
+      final userInfo = await AppleSignInService.getCurrentUser();
+      if (userInfo != null) {
+        final userIdentifier = userInfo['userIdentifier'] as String?;
+        if (userIdentifier != null) {
+          // 从SharedPreferences读取用户的金币数量
+          final prefs = await SharedPreferences.getInstance();
+          final coins = prefs.getInt('user_coins_$userIdentifier') ?? 0;
+          setState(() {
+            _userCoins = coins;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Load user coins error: $e');
+    }
   }
 
   Future<void> _initializePurchaseService() async {
@@ -95,6 +141,7 @@ class _RechargeScreenState extends State<RechargeScreen> with TickerProviderStat
     
     switch (result.status) {
       case CustomPurchaseStatus.success:
+        _handlePurchaseSuccess();
         _showSuccessDialog('购买成功！金币已到账');
         break;
       case CustomPurchaseStatus.failed:
@@ -111,6 +158,28 @@ class _RechargeScreenState extends State<RechargeScreen> with TickerProviderStat
         break;
       default:
         break;
+    }
+  }
+
+  Future<void> _handlePurchaseSuccess() async {
+    if (_selectedRechargeItem != null) {
+      try {
+        final userInfo = await AppleSignInService.getCurrentUser();
+        if (userInfo != null) {
+          final userIdentifier = userInfo['userIdentifier'] as String?;
+          if (userIdentifier != null) {
+            final prefs = await SharedPreferences.getInstance();
+            final currentCoins = prefs.getInt('user_coins_$userIdentifier') ?? 0;
+            final newCoins = currentCoins + _selectedRechargeItem!.coins;
+            await prefs.setInt('user_coins_$userIdentifier', newCoins);
+            setState(() {
+              _userCoins = newCoins;
+            });
+          }
+        }
+      } catch (e) {
+        debugPrint('Update user coins error: $e');
+      }
     }
   }
 
@@ -159,6 +228,67 @@ class _RechargeScreenState extends State<RechargeScreen> with TickerProviderStat
     if (_selectedProductId == null) return;
     if (_isPurchasing) return;
     
+    // 检查登录状态
+    final isSignedIn = await AppleSignInService.isAppleSignedIn();
+    if (!isSignedIn) {
+      // 显示登录提示对话框
+      final shouldLogin = await _showLoginDialog();
+      if (shouldLogin == true) {
+        // 导航到账户管理页面进行登录
+        final loginResult = await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => AccountManagementScreen()),
+        );
+        
+        // 如果登录成功，重新检查登录状态并继续购买
+        if (loginResult == true) {
+          // 重新加载用户状态
+          await _loadUserStatus();
+          
+          if (_isLoggedIn) {
+            // 登录成功，继续购买流程
+            _initiatePurchase();
+          } else {
+            _showErrorSnackBar('登录状态验证失败，请重试');
+          }
+        }
+      }
+      return;
+    }
+    
+    // 用户已登录，直接进行购买
+    _initiatePurchase();
+  }
+
+  Future<bool?> _showLoginDialog() async {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('需要登录'),
+        content: Text('购买前请先登录您的账户，这样可以确保您的购买记录和金币能够正确保存。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              '去登录',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _initiatePurchase() {
+    if (_selectedProductId == null || _isPurchasing) return;
+    
     debugPrint('=== RechargeScreen: Starting purchase for $_selectedProductId ===');
     
     setState(() {
@@ -187,6 +317,11 @@ class _RechargeScreenState extends State<RechargeScreen> with TickerProviderStat
       ),
     );
     
+    // 异步执行购买
+    _executePurchase();
+  }
+
+  Future<void> _executePurchase() async {
     try {
       debugPrint('RechargeScreen: Calling purchaseService.buyProduct($_selectedProductId)');
       await _purchaseService.buyProduct(_selectedProductId!);
@@ -402,11 +537,11 @@ class _RechargeScreenState extends State<RechargeScreen> with TickerProviderStat
                   textBaseline: TextBaseline.alphabetic,
                   children: [
                     Text(
-                      '9900',
+                      _userCoins.toString(),
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFFFF6B6B),
+                        color: _isLoggedIn ? Color(0xFFFF6B6B) : Colors.grey[400]!,
                       ),
                     ),
                     SizedBox(width: 6),
