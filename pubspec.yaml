@@ -62,6 +62,7 @@ flutter_icons:
   image_path: "assets/images/app_icon_1024.png"  # 替换为你的图标路径
   remove_alpha_ios: true  # 移除透明通道[5](@ref)
 
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

@@ -68,7 +68,7 @@ class _AppleSignInTestRunnerState extends State<AppleSignInTestRunner> {
             AppleIDAuthorizationScopes.fullName,
           ],
           webAuthenticationOptions: WebAuthenticationOptions(
-            clientId: 'com.aoyou.xinbo1',
+            clientId: 'com.aoyou.xinbo',
             redirectUri: Uri.parse('https://your-redirect-url.com/'),
           ),
         );
