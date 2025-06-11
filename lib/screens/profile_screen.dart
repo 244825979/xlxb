@@ -12,6 +12,8 @@ import 'main_screen.dart';
 import 'liked_posts_screen.dart';
 import 'liked_quotes_screen.dart';
 import 'settings_screen.dart';
+import 'recharge_screen.dart';
+import 'account_management_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   @override
@@ -145,6 +147,16 @@ class ProfileScreen extends StatelessWidget {
                         ],
                       ),
                     ),
+                    
+                    SizedBox(height: 20),
+                    
+                    // 会员升级入口
+                    _buildPremiumUpgradeCard(context),
+                    
+                    SizedBox(height: 20),
+                    
+                    // 账户管理入口
+                    _buildAccountManagementCard(context),
                     
                     SizedBox(height: 20),
                     
@@ -1132,6 +1144,148 @@ class ProfileScreen extends StatelessWidget {
       context,
       MaterialPageRoute(
         builder: (context) => LikedQuotesScreen(),
+      ),
+    );
+  }
+
+  // 构建会员升级入口卡片
+  Widget _buildPremiumUpgradeCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => RechargeScreen(),
+          ),
+        );
+      },
+      child: Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [AppColors.softShadow],
+        ),
+        child: Row(
+          children: [
+            // 左侧图标
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.playButton.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.wallet,
+                color: AppColors.playButton,
+                size: 24,
+              ),
+            ),
+            
+            SizedBox(width: 16),
+            
+            // 中间内容
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '充值中心',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    '金币 • 会员 • 更多功能',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // 右侧箭头
+            Icon(
+              Icons.arrow_forward_ios,
+              color: AppColors.textSecondary,
+              size: 16,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 构建账户管理入口卡片
+  Widget _buildAccountManagementCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AccountManagementScreen(),
+          ),
+        );
+      },
+      child: Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [AppColors.softShadow],
+        ),
+        child: Row(
+          children: [
+            // 左侧图标
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.account_circle,
+                color: AppColors.primary,
+                size: 24,
+              ),
+            ),
+            
+            SizedBox(width: 16),
+            
+            // 中间内容
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '账户管理',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Apple ID • 支付方式 • 安全设置',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // 右侧箭头
+            Icon(
+              Icons.arrow_forward_ios,
+              color: AppColors.textSecondary,
+              size: 16,
+            ),
+          ],
+        ),
       ),
     );
   }

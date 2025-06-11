@@ -27,11 +27,6 @@ class LikedPostsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 设置状态栏为黑色
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark.copyWith(
-      statusBarColor: Colors.transparent,
-    ));
-
     return Container(
       decoration: BoxDecoration(
         gradient: AppColors.backgroundGradient,
@@ -41,6 +36,11 @@ class LikedPostsScreen extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
+          systemOverlayStyle: SystemUiOverlayStyle.dark.copyWith(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.dark,
+            statusBarBrightness: Brightness.light,
+          ),
           leading: IconButton(
             icon: Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
             onPressed: () => Navigator.pop(context),

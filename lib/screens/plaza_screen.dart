@@ -307,90 +307,114 @@ class PlazaScreen extends StatelessWidget {
                 
                 // 互动区域
                 SizedBox(height: 12),
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => provider.toggleLike(post.id, context),
-                      child: Row(
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final screenWidth = MediaQuery.of(context).size.width;
+                    final isSmallScreen = screenWidth < 375; // iPhone SE等小屏机型
+                    final isVerySmallScreen = screenWidth < 350; // 更小的屏幕
+                    
+                    // 判断是否需要使用紧凑模式
+                    final isCurrentUserPost = UserService.isCurrentUser(post.userId);
+                    final buttonCount = isCurrentUserPost ? 2 : 4; // 当前用户：喜欢+评论，其他用户：喜欢+评论+屏蔽+举报
+                    final needCompactMode = isSmallScreen && buttonCount > 2;
+                    
+                    if (needCompactMode && !isCurrentUserPost) {
+                      // 紧凑模式：分两行显示
+                      return Column(
                         children: [
-                          Icon(
-                            post.isLiked ? Icons.favorite : Icons.favorite_border,
-                            size: 20,
-                            color: post.isLiked ? Colors.red : AppColors.textSecondary,
+                          // 第一行：喜欢和评论
+                          Row(
+                            children: [
+                              _buildActionButton(
+                                icon: post.isLiked ? Icons.favorite : Icons.favorite_border,
+                                iconColor: post.isLiked ? Colors.red : AppColors.textSecondary,
+                                text: '喜欢',
+                                textColor: post.isLiked ? Colors.red : AppColors.textSecondary,
+                                onTap: () => provider.toggleLike(post.id, context),
+                                isSmall: isVerySmallScreen,
+                              ),
+                              SizedBox(width: isVerySmallScreen ? 12 : 16),
+                              _buildActionButton(
+                                icon: Icons.chat_bubble_outline,
+                                iconColor: AppColors.textSecondary,
+                                text: '评论${post.commentCount > 0 ? '(${post.commentCount})' : ''}',
+                                textColor: AppColors.textSecondary,
+                                onTap: () {},
+                                isSmall: isVerySmallScreen,
+                              ),
+                            ],
                           ),
-                          SizedBox(width: 4),
-                          Text(
-                            '喜欢',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: post.isLiked ? Colors.red : AppColors.textSecondary,
-                            ),
+                          SizedBox(height: 8),
+                          // 第二行：屏蔽和举报
+                          Row(
+                            children: [
+                              _buildActionButton(
+                                icon: Icons.block,
+                                iconColor: AppColors.textSecondary,
+                                text: '屏蔽',
+                                textColor: AppColors.textSecondary,
+                                onTap: () => _blockPost(context, post),
+                                isSmall: isVerySmallScreen,
+                              ),
+                              SizedBox(width: isVerySmallScreen ? 12 : 16),
+                              _buildActionButton(
+                                icon: Icons.flag_outlined,
+                                iconColor: AppColors.textSecondary,
+                                text: '举报',
+                                textColor: AppColors.textSecondary,
+                                onTap: () => _showReportDialog(context, post),
+                                isSmall: isVerySmallScreen,
+                              ),
+                            ],
                           ),
                         ],
-                      ),
-                    ),
-                    SizedBox(width: 16),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.chat_bubble_outline,
-                          size: 20,
-                          color: AppColors.textSecondary,
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          '评论${post.commentCount > 0 ? '(${post.commentCount})' : ''}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
+                      );
+                    } else {
+                      // 普通模式：单行显示
+                      return Row(
+                        children: [
+                          _buildActionButton(
+                            icon: post.isLiked ? Icons.favorite : Icons.favorite_border,
+                            iconColor: post.isLiked ? Colors.red : AppColors.textSecondary,
+                            text: '喜欢',
+                            textColor: post.isLiked ? Colors.red : AppColors.textSecondary,
+                            onTap: () => provider.toggleLike(post.id, context),
+                            isSmall: isSmallScreen,
                           ),
-                        ),
-                      ],
-                    ),
-                    Spacer(),
-                    // 屏蔽按钮 - 只对非当前用户的内容显示
-                    if (!UserService.isCurrentUser(post.userId))
-                      GestureDetector(
-                        onTap: () => _blockPost(context, post),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.block,
-                              size: 20,
-                              color: AppColors.textSecondary,
+                          SizedBox(width: isSmallScreen ? 12 : 16),
+                          _buildActionButton(
+                            icon: Icons.chat_bubble_outline,
+                            iconColor: AppColors.textSecondary,
+                            text: '评论${post.commentCount > 0 ? '(${post.commentCount})' : ''}',
+                            textColor: AppColors.textSecondary,
+                            onTap: () {},
+                            isSmall: isSmallScreen,
+                            isFlexible: true, // 评论文字可能比较长，允许弹性布局
+                          ),
+                          if (!isCurrentUserPost) ...[
+                            Spacer(),
+                            _buildActionButton(
+                              icon: Icons.block,
+                              iconColor: AppColors.textSecondary,
+                              text: '屏蔽',
+                              textColor: AppColors.textSecondary,
+                              onTap: () => _blockPost(context, post),
+                              isSmall: isSmallScreen,
                             ),
-                            SizedBox(width: 4),
-                            Text(
-                              '屏蔽',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    if (!UserService.isCurrentUser(post.userId))
-                      SizedBox(width: 16),
-                    // 举报按钮 - 只对非当前用户的内容显示
-                    if (!UserService.isCurrentUser(post.userId))
-                      GestureDetector(
-                        onTap: () => _showReportDialog(context, post),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.flag_outlined,
-                              size: 20,
-                              color: AppColors.textSecondary,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              '举报',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
+                            SizedBox(width: isSmallScreen ? 8 : 12),
+                            _buildActionButton(
+                              icon: Icons.flag_outlined,
+                              iconColor: AppColors.textSecondary,
+                              text: '举报',
+                              textColor: AppColors.textSecondary,
+                              onTap: () => _showReportDialog(context, post),
+                              isSmall: isSmallScreen,
                             ),
                           ],
-                        ),
-                      ),
-                  ],
+                        ],
+                      );
+                    }
+                  },
                 ),
               ],
             ),
@@ -398,6 +422,44 @@ class PlazaScreen extends StatelessWidget {
         );
       },
     );
+  }
+
+  // 构建动作按钮
+  Widget _buildActionButton({
+    required IconData icon,
+    required Color iconColor,
+    required String text,
+    required Color textColor,
+    required VoidCallback onTap,
+    bool isSmall = false,
+    bool isFlexible = false,
+  }) {
+    final widget = GestureDetector(
+      onTap: onTap,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: isSmall ? 18 : 20,
+            color: iconColor,
+          ),
+          SizedBox(width: isSmall ? 3 : 4),
+          Text(
+            text,
+            style: TextStyle(
+              color: textColor,
+              fontSize: isSmall ? 11 : 12,
+              fontWeight: FontWeight.w400,
+            ),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
+        ],
+      ),
+    );
+    
+    return isFlexible ? Flexible(child: widget) : widget;
   }
 
   // 构建图片显示组件
