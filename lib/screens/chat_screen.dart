@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_strings.dart';
 import '../providers/chat_provider.dart';
 import '../utils/avatar_utils.dart';
+import '../services/apple_signin_service.dart';
 import 'feedback_screen.dart';
+import 'recharge_screen.dart';
 import 'dart:math';
 
 class ChatScreen extends StatefulWidget {
@@ -16,6 +19,11 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late final AnimationController _loadingController;
+  
+  bool _isVip = false;
+  int _userCoins = 0;
+  bool _isLoggedIn = false;
+  bool _isLoadingUserData = true;
 
   @override
   void initState() {
@@ -25,6 +33,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       duration: Duration(milliseconds: 1200),
       vsync: this,
     )..repeat();
+    
+    // 加载用户数据
+    _loadUserData();
     
     // 初始化完成后滚动到底部
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -48,6 +59,163 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         curve: Curves.easeOut,
       );
     }
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final isSignedIn = await AppleSignInService.isAppleSignedIn();
+      setState(() {
+        _isLoggedIn = isSignedIn;
+      });
+      
+      if (isSignedIn) {
+        final userInfo = await AppleSignInService.getCurrentUser();
+        if (userInfo != null) {
+          final userIdentifier = userInfo['userIdentifier'] as String?;
+          if (userIdentifier != null) {
+            final prefs = await SharedPreferences.getInstance();
+            
+            // 读取金币数量
+            final coins = prefs.getInt('user_coins_$userIdentifier') ?? 0;
+            
+            // 读取VIP状态
+            bool isVip = prefs.getBool('user_vip_status_$userIdentifier') ?? false;
+            
+            // 检查VIP是否过期
+            if (isVip) {
+              final expireTime = prefs.getInt('user_vip_expire_time_$userIdentifier') ?? 0;
+              if (expireTime > 0) {
+                final expireDateTime = DateTime.fromMillisecondsSinceEpoch(expireTime);
+                if (DateTime.now().isAfter(expireDateTime)) {
+                  isVip = false;
+                  await prefs.setBool('user_vip_status_$userIdentifier', false);
+                }
+              }
+            }
+            
+            setState(() {
+              _userCoins = coins;
+              _isVip = isVip;
+              _isLoadingUserData = false;
+            });
+          }
+        }
+      } else {
+        setState(() {
+          _userCoins = 0;
+          _isVip = false;
+          _isLoadingUserData = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoggedIn = false;
+        _userCoins = 0;
+        _isVip = false;
+        _isLoadingUserData = false;
+      });
+    }
+  }
+
+  Future<bool> _deductCoin() async {
+    if (_isVip) return true; // VIP用户免费
+    
+    if (!_isLoggedIn) {
+      _showLoginRequiredDialog();
+      return false;
+    }
+    
+    if (_userCoins <= 0) {
+      _showInsufficientCoinsDialog();
+      return false;
+    }
+    
+    try {
+      final userInfo = await AppleSignInService.getCurrentUser();
+      if (userInfo != null) {
+        final userIdentifier = userInfo['userIdentifier'] as String?;
+        if (userIdentifier != null) {
+          final prefs = await SharedPreferences.getInstance();
+          final newCoins = _userCoins - 1;
+          await prefs.setInt('user_coins_$userIdentifier', newCoins);
+          setState(() {
+            _userCoins = newCoins;
+          });
+          return true;
+        }
+      }
+    } catch (e) {
+      _showErrorDialog('扣除金币失败，请重试');
+    }
+    return false;
+  }
+
+  void _showLoginRequiredDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('需要登录'),
+        content: Text('请先登录您的账户才能发送消息'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('确定'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showInsufficientCoinsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('金币不足'),
+        content: Text('您的金币余额不足，无法发送消息。是否前往充值？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('取消'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => RechargeScreen()),
+              ).then((_) => _loadUserData()); // 充值页面返回后刷新数据
+            },
+            child: Text(
+              '去充值',
+              style: TextStyle(color: AppColors.primary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('错误'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('确定'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getInputHint() {
+    if (_isLoadingUserData) return '加载中...';
+    if (!_isLoggedIn) return '请先登录后发送消息';
+    if (_isVip) return 'VIP用户，免费无限对话...';
+    return '普通用户，每条消息消耗1金币（余额：$_userCoins）';
   }
 
   @override
@@ -163,9 +331,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                       Expanded(
                         child: TextField(
                           controller: _textController,
-                          enabled: !provider.isTyping,
+                          enabled: !provider.isTyping && _isLoggedIn && (_isVip || _userCoins > 0),
                           decoration: InputDecoration(
-                            hintText: provider.isTyping ? '助手正在回复中...' : AppStrings.inputHint,
+                            hintText: provider.isTyping ? '助手正在回复中...' : _getInputHint(),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(25),
                               borderSide: BorderSide.none,
@@ -177,14 +345,17 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                               vertical: 12,
                             ),
                           ),
-                          onSubmitted: (text) {
+                          onSubmitted: (text) async {
                             if (text.trim().isNotEmpty && !provider.isTyping) {
-                              provider.sendTextMessage(text);
-                              _textController.clear();
-                              // 发送消息后滚动到底部
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                _scrollToBottom();
-                              });
+                              final canSend = await _deductCoin();
+                              if (canSend) {
+                                provider.sendTextMessage(text);
+                                _textController.clear();
+                                // 发送消息后滚动到底部
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  _scrollToBottom();
+                                });
+                              }
                             }
                           },
                         ),
@@ -194,16 +365,19 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                       
                       // 发送按钮
                       GestureDetector(
-                        onTap: () {
+                        onTap: () async {
                           if (!provider.isTyping) {
                             final text = _textController.text;
                             if (text.trim().isNotEmpty) {
-                              provider.sendTextMessage(text);
-                              _textController.clear();
-                              // 发送消息后滚动到底部
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                _scrollToBottom();
-                              });
+                              final canSend = await _deductCoin();
+                              if (canSend) {
+                                provider.sendTextMessage(text);
+                                _textController.clear();
+                                // 发送消息后滚动到底部
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  _scrollToBottom();
+                                });
+                              }
                             }
                           }
                         },
@@ -211,7 +385,11 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                           width: 50,
                           height: 50,
                           decoration: BoxDecoration(
-                            color: provider.isTyping ? AppColors.textSecondary : AppColors.playButton,
+                            color: provider.isTyping 
+                                ? AppColors.textSecondary 
+                                : (_isLoggedIn && (_isVip || _userCoins > 0)) 
+                                    ? AppColors.playButton 
+                                    : AppColors.textSecondary,
                             borderRadius: BorderRadius.circular(25),
                           ),
                           child: Icon(
