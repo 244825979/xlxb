@@ -43,7 +43,7 @@ jobs:
           WORKING_DIRECTORY: build/ios/ipa
           IPA_FILE_NAME: 心声日记.ipa
           APPLE_USERNAME: chixin@lurcohongkong.shop
-          APPLE_PASSWORD: swyf-urda-wyib-timc
+          APPLE_PASSWORD: nrga-pzbs-hzro-wujn
           APPLE_ASC_PROVIDER: 79L3K25T7P
         run: |
           cd $WORKING_DIRECTORY
