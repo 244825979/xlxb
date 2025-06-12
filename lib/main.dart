@@ -5,8 +5,18 @@ import 'providers/home_provider.dart';
 import 'providers/plaza_provider.dart';
 import 'providers/quotes_provider.dart';
 import 'utils/avatar_utils.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'utils/permission_utils.dart';
+import 'screens/main_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // 请求网络权限
+  if (await Permission.location.isDenied) {
+    await Permission.location.request();
+  }
+  
   // 初始化用户头像，确保整个应用中使用同一个头像
   AvatarUtils.getUserAvatar();
   
@@ -48,7 +58,15 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: Builder(
+        builder: (context) {
+          // 在应用启动时检查权限
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            PermissionUtils.checkAndRequestPermission(context);
+          });
+          return const MainScreen(); // 使用MainScreen作为主页面
+        },
+      ),
     );
   }
 }

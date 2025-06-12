@@ -28,7 +28,7 @@ class VoiceDiaryApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ProfileProvider()..initialize()),
       ],
       child: MaterialApp(
-        title: '心声日记',
+        title: '心聊想伴',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,
